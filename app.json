@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "protein-ai",
+    "name": "Protein AI",
     "slug": "protein-ai",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -41,6 +41,12 @@
             "./assets/fonts/Platypi-Regular.ttf",
             "./assets/fonts/Platypi-Bold.ttf"
           ]
+        }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow Protein AI to access your camera to scan meals and barcodes."
         }
       ]
     ],

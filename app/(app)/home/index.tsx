@@ -16,6 +16,8 @@ import { useCallback, useRef, useMemo, useState } from "react";
 import { Streak } from "@/components/streak";
 import { BlurOverlay } from "@/components/blur-overlay";
 import { BlurView } from "expo-blur";
+import { useNavigation } from "@react-navigation/native";
+import { useRouter } from "expo-router";
 
 interface Meal {
   name: string;
@@ -24,7 +26,7 @@ interface Meal {
 
 export default function Index() {
   const [isBottomSheetVisible, setIsBottomSheetVisible] = useState(false);
-
+  const router = useRouter();
   const bottomSheetRef = useRef<BottomSheet>(null);
   const snapPoints = useMemo(() => ["70%"], []);
 
@@ -48,6 +50,17 @@ export default function Index() {
     }
   }, []);
 
+  const navigation = useNavigation();
+
+  const renderFloatingButton = () => (
+    <TouchableOpacity
+      style={styles.fab}
+      onPress={() => router.push("/home/camera")}
+    >
+      <MaterialCommunityIcons name="plus" size={32} color="#FCE9BC" />
+    </TouchableOpacity>
+  );
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.scrollView}>
@@ -55,8 +68,7 @@ export default function Index() {
           <Text style={styles.title}>Protein AI</Text>
           <TouchableOpacity onPress={handleBadgePress}>
             <View style={styles.badge}>
-              <Text style={styles.badgeNumber}>1</Text>
-              <FontAwesome5 name="seedling" size={12} color="#4CAF50" />
+              <Text style={styles.badgeNumber}>1 🌱</Text>
             </View>
           </TouchableOpacity>
         </View>
@@ -102,8 +114,7 @@ export default function Index() {
         </Text>
       </ScrollView>
 
-      {/* <BlurOverlay visible={isBottomSheetVisible} /> */}
-
+      {renderFloatingButton()}
       <BottomSheet
         ref={bottomSheetRef}
         snapPoints={snapPoints}
@@ -228,5 +239,25 @@ const styles = StyleSheet.create({
     backgroundColor: "#333333",
     borderTopLeftRadius: 40,
     borderTopRightRadius: 40,
+  },
+  fab: {
+    position: "absolute",
+    right: 20,
+    bottom: 40,
+    backgroundColor: "#333333",
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+    zIndex: 1,
   },
 });

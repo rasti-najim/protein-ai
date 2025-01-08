@@ -50,7 +50,7 @@ export default function Onboarding() {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Soft);
       setCurrentStep(currentStep + 1);
     } else {
-      router.push("/");
+      router.push("/home");
     }
   };
 
