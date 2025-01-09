@@ -55,6 +55,12 @@
         {
           "cameraPermission": "Allow Protein AI to access your camera to scan meals and barcodes."
         }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow Protein AI to access your photos to scan meals and barcodes."
+        }
       ]
     ],
     "experiments": {

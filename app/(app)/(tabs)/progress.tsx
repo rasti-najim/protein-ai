@@ -1,0 +1,216 @@
+import {
+  Text,
+  View,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
+import { BarChart } from "react-native-gifted-charts";
+
+interface DayData {
+  day: string;
+  shortDay: string;
+  protein: number;
+  goal: number;
+}
+
+export default function Progress() {
+  const router = useRouter();
+  const weeklyGoal = 154;
+
+  const barData = [
+    {
+      value: 125,
+      label: "S",
+      frontColor: "#A8D1FF",
+      labelTextStyle: styles.chartLabel,
+    },
+    {
+      value: 163,
+      label: "M",
+      frontColor: "#4A90E2",
+      labelTextStyle: styles.chartLabel,
+    },
+    {
+      value: 73,
+      label: "T",
+      frontColor: "#FF6B6B",
+      labelTextStyle: styles.chartLabel,
+    },
+    {
+      value: 125,
+      label: "W",
+      frontColor: "#A8D1FF",
+      labelTextStyle: styles.chartLabel,
+    },
+    {
+      value: 125,
+      label: "T",
+      frontColor: "#A8D1FF",
+      labelTextStyle: styles.chartLabel,
+    },
+    {
+      value: 125,
+      label: "F",
+      frontColor: "#A8D1FF",
+      labelTextStyle: styles.chartLabel,
+    },
+    {
+      value: 125,
+      label: "S",
+      frontColor: "#A8D1FF",
+      labelTextStyle: styles.chartLabel,
+    },
+  ];
+
+  const historyDates = [
+    "Tuesday 1/7/25",
+    "Monday 1/6/25",
+    "Sunday 1/5/25",
+    "Saturday 1/4/25",
+    "Friday 1/3/25",
+    "Thursday 1/2/25",
+  ];
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <ScrollView style={styles.scrollView}>
+        <Text style={styles.title}>Progress</Text>
+
+        <Text style={styles.sectionTitle}>This Week</Text>
+
+        <View style={styles.chartContainer}>
+          <View style={styles.goalLine}>
+            <View style={styles.goalDash} />
+            <Text style={styles.goalText}>{weeklyGoal}g</Text>
+          </View>
+
+          <BarChart
+            data={barData}
+            barWidth={24}
+            spacing={16}
+            roundedTop
+            roundedBottom
+            // hideRules
+            xAxisThickness={1}
+            xAxisColor="rgba(42, 42, 42, 0.1)"
+            yAxisThickness={0}
+            maxValue={200}
+            noOfSections={4}
+            renderTooltip={(item) => (
+              <View style={styles.proteinBadge}>
+                <Text style={styles.proteinText}>{item.value}g</Text>
+              </View>
+            )}
+          />
+        </View>
+
+        <Text style={styles.sectionTitle}>History</Text>
+
+        <View style={styles.historyList}>
+          {historyDates.map((date, index) => (
+            <TouchableOpacity
+              key={index}
+              style={styles.historyItem}
+              onPress={() => router.push(`/history/${date}`)}
+            >
+              <Text style={styles.historyDate}>{date}</Text>
+              <MaterialCommunityIcons
+                name="chevron-right"
+                size={32}
+                color="#2A2A2A"
+              />
+            </TouchableOpacity>
+          ))}
+        </View>
+      </ScrollView>
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#FCE9BC",
+  },
+  scrollView: {
+    flex: 1,
+    padding: 20,
+  },
+  title: {
+    fontSize: 42,
+    fontFamily: "Platypi",
+    color: "#2A2A2A",
+    marginBottom: 32,
+  },
+  sectionTitle: {
+    fontSize: 32,
+    fontFamily: "Platypi",
+    color: "#2A2A2A",
+    marginBottom: 24,
+  },
+  chartContainer: {
+    height: 300,
+    marginBottom: 40,
+    paddingTop: 20,
+  },
+  goalLine: {
+    flexDirection: "row",
+    alignItems: "center",
+    position: "absolute",
+    top: 60,
+    width: "100%",
+    zIndex: 1,
+  },
+  goalDash: {
+    flex: 1,
+    height: 1,
+    backgroundColor: "#2A2A2A",
+    opacity: 0.2,
+    borderStyle: "dashed",
+    borderWidth: 1,
+  },
+  goalText: {
+    fontSize: 16,
+    fontFamily: "Platypi",
+    color: "#666666",
+    marginLeft: 8,
+  },
+  chartLabel: {
+    fontSize: 20,
+    fontFamily: "Platypi",
+    color: "#2A2A2A",
+  },
+  proteinBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "rgba(42, 42, 42, 0.2)",
+    backgroundColor: "#FCE9BC",
+  },
+  proteinText: {
+    fontSize: 14,
+    fontFamily: "Platypi",
+    color: "#666666",
+  },
+  historyList: {
+    gap: 16,
+  },
+  historyItem: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: "rgba(42, 42, 42, 0.1)",
+  },
+  historyDate: {
+    fontSize: 32,
+    fontFamily: "Platypi",
+    color: "#2A2A2A",
+  },
+});
