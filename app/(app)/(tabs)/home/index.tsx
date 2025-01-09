@@ -226,7 +226,7 @@ export default function Index() {
 
         <Text style={styles.sectionTitle}>Today</Text>
         <FontAwesome6
-          name="lightning-bolt"
+          name="bolt"
           size={16}
           color="#4CAF50"
           style={styles.lightningIcon}
