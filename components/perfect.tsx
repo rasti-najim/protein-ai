@@ -19,7 +19,9 @@ export const Perfect = ({ onNext }: PerfectProps) => {
         <Text style={{ fontWeight: "bold" }}>long-lasting energy</Text>.
       </Text>
 
-      <Text style={styles.subtitle}>Continue to the final step!</Text>
+      <Text style={styles.subtitle}>
+        <Text style={{ fontWeight: "bold" }}>Continue</Text> to the final step!
+      </Text>
     </View>
   );
 };

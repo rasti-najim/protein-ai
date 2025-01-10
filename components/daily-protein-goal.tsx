@@ -38,9 +38,9 @@ export const DailyProteinGoal = ({
       </View>
 
       <Text style={styles.description}>
-        We calculated {proteinGoal}g as your{" "}
-        <Text style={styles.boldText}>ideal daily protein goal</Text>. You can
-        always change it later in Settings.
+        We calculated <Text style={styles.boldText}>{proteinGoal}g</Text> as
+        your <Text style={styles.boldText}>ideal daily protein goal</Text>. You
+        can always change it later in Settings.
       </Text>
     </View>
   );

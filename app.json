@@ -9,6 +9,7 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
+      "usesAppleSignIn": true,
       "supportsTablet": true,
       "bundleIdentifier": "com.barnburner.proteinai"
     },
@@ -45,8 +46,8 @@
         "expo-font",
         {
           "fonts": [
-            "./assets/fonts/Platypi-Regular.ttf",
-            "./assets/fonts/Platypi-Bold.ttf"
+            "./assets/fonts/Platypi.ttf",
+            "./assets/fonts/Platypi-Italic.ttf"
           ]
         }
       ],
@@ -62,7 +63,14 @@
           "photosPermission": "Allow Protein AI to access your photos to scan meals and barcodes."
         }
       ],
-      "expo-secure-store"
+      "expo-secure-store",
+      ["expo-apple-authentication"],
+      [
+        "@react-native-google-signin/google-signin",
+        {
+          "iosUrlScheme": "com.googleusercontent.apps.122474468786-73av6fc46ndmp3mae556ilkpqsdjs2or"
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true

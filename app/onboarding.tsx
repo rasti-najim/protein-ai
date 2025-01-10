@@ -7,6 +7,7 @@ import { Perfect } from "@/components/perfect";
 import { DailyProteinGoal } from "@/components/daily-protein-goal";
 import * as Haptics from "expo-haptics";
 import { router } from "expo-router";
+import { CreateAccount } from "./create-account";
 
 interface OnboardingData {
   gender: "male" | "female" | "other" | null;
@@ -16,12 +17,14 @@ interface OnboardingData {
   targetWeight: number | null;
   exerciseFrequency: "0-2" | "3-4" | "5+" | null;
   goal: "lose" | "gain" | "maintain" | null;
-  goalLose: number | null;
+  dailyProteinGoal: number | null;
+  email: string | null;
+  hasAccount: boolean;
 }
 
 export default function Onboarding() {
   const [currentStep, setCurrentStep] = useState<number>(0);
-  const totalSteps = 5;
+  const totalSteps = 6;
   const [data, setData] = useState<OnboardingData>({
     gender: null,
     age: null,
@@ -30,7 +33,9 @@ export default function Onboarding() {
     targetWeight: null,
     exerciseFrequency: null,
     goal: null,
-    goalLose: null,
+    dailyProteinGoal: null,
+    email: null,
+    hasAccount: false,
   });
 
   const handleExerciseSelect = (selected: "0-2" | "3-4" | "5+") => {
@@ -72,6 +77,8 @@ export default function Onboarding() {
         return false;
       case 4:
         return false;
+      case 5:
+        return false;
       default:
         return false;
     }
@@ -89,6 +96,30 @@ export default function Onboarding() {
         return <Perfect onNext={handleNext} />;
       case 4:
         return <DailyProteinGoal proteinGoal={100} onFinish={handleNext} />;
+      case 5:
+        return (
+          <CreateAccount
+            title="Create Account"
+            onBack={handleBack}
+            type="signup"
+            onGoogleSignIn={(user) => {
+              console.log("Google Sign In");
+              setData((prev) => ({
+                ...prev,
+                email: user.email ?? null,
+                hasAccount: true,
+              }));
+            }}
+            onAppleSignIn={(user) => {
+              console.log("Apple Sign In");
+              setData((prev) => ({
+                ...prev,
+                email: user.email ?? null,
+                hasAccount: true,
+              }));
+            }}
+          />
+        );
       default:
         return null;
     }
@@ -101,7 +132,8 @@ export default function Onboarding() {
       onBack={handleBack}
       onNext={handleNext}
       isNextDisabled={isNextDisabled()}
-      lastStep={currentStep === totalSteps - 1}
+      // lastStep={currentStep === totalSteps - 1}
+      showLayout={currentStep !== totalSteps - 1}
     >
       {renderStep()}
     </OnboardingLayout>
