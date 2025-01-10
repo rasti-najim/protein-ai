@@ -61,7 +61,8 @@
         {
           "photosPermission": "Allow Protein AI to access your photos to scan meals and barcodes."
         }
-      ]
+      ],
+      "expo-secure-store"
     ],
     "experiments": {
       "typedRoutes": true
