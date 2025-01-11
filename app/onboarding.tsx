@@ -9,13 +9,14 @@ import * as Haptics from "expo-haptics";
 import { router } from "expo-router";
 import CreateAccount from "../components/create-account";
 import { OnboardingLoading } from "@/components/onboarding-loading";
+import { Goal } from "@/components/goal";
 
 export interface OnboardingData {
   gender: "male" | "female" | "other" | null;
   age: number | null;
   height: number | null;
   targetWeight: number | null;
-  targetWeightUnit: "imperial" | "metric" | null;
+  targetWeightUnit: "lbs" | "kg" | null;
   exerciseFrequency: "0-2" | "3-4" | "5+" | null;
   goal: "lose" | "gain" | "maintain" | null;
   dailyProteinGoal: number | null;
@@ -25,7 +26,7 @@ export interface OnboardingData {
 
 export default function Onboarding() {
   const [currentStep, setCurrentStep] = useState<number>(0);
-  const totalSteps = 7;
+  const totalSteps = 8;
   const [data, setData] = useState<OnboardingData>({
     gender: null,
     age: null,
@@ -47,15 +48,20 @@ export default function Onboarding() {
     setData((prev) => ({ ...prev, gender: selected }));
   };
 
-  const handleWeightSelect = (
-    selected: number,
-    unit: "imperial" | "metric"
-  ) => {
+  const handleWeightSelect = (selected: number, unit: "lbs" | "kg") => {
     setData((prev) => ({
       ...prev,
       targetWeight: selected,
       targetWeightUnit: unit,
     }));
+  };
+
+  const handleGoalSelect = (selected: "lose" | "gain" | "maintain") => {
+    setData((prev) => ({ ...prev, goal: selected }));
+  };
+
+  const handleProteinGoalSelect = (proteinGoal: number) => {
+    setData((prev) => ({ ...prev, dailyProteinGoal: proteinGoal }));
   };
 
   const handleNext = async () => {
@@ -83,7 +89,7 @@ export default function Onboarding() {
       case 2:
         return !data.exerciseFrequency;
       case 3:
-        return false;
+        return !data.goal;
       case 4:
         return false;
       case 5:
@@ -104,15 +110,20 @@ export default function Onboarding() {
       case 2:
         return <Exercise onSelect={handleExerciseSelect} />;
       case 3:
-        return <Perfect />;
+        return <Goal onSelect={handleGoalSelect} />;
       case 4:
+        return <Perfect />;
+      case 5:
         return (
           <DailyProteinGoal
             targetWeight={data.targetWeight ?? 0}
-            targetWeightUnit={data.targetWeightUnit ?? "imperial"}
+            targetWeightUnit={data.targetWeightUnit ?? "lbs"}
+            exerciseFrequency={data.exerciseFrequency ?? "0-2"}
+            goal={data.goal ?? "maintain"}
+            onSelect={handleProteinGoalSelect}
           />
         );
-      case 5:
+      case 6:
         return (
           <CreateAccount
             title="Create Account"
@@ -138,7 +149,7 @@ export default function Onboarding() {
             }}
           />
         );
-      case 6:
+      case 7:
         return <OnboardingLoading onboardingData={data} />;
       default:
         return null;

@@ -1,146 +1,21 @@
-import {
-  Text,
-  View,
-  StyleSheet,
-  TouchableOpacity,
-  Animated,
-} from "react-native";
-import { useState, useEffect, useRef } from "react";
-import * as Haptics from "expo-haptics";
+import { SelectOption } from "./select-option";
 
 interface SelectGenderProps {
   onSelect: (gender: "male" | "female" | "other") => void;
 }
 
 export const SelectGender = ({ onSelect }: SelectGenderProps) => {
-  const [selectedGender, setSelectedGender] = useState<
-    "male" | "female" | "other" | null
-  >(null);
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const scaleAnim = useRef(new Animated.Value(0.8)).current;
-
-  useEffect(() => {
-    Animated.parallel([
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 600,
-        useNativeDriver: true,
-      }),
-      Animated.spring(scaleAnim, {
-        toValue: 1,
-        tension: 50,
-        friction: 7,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  }, []);
-
-  const handleSelect = async (gender: "male" | "female" | "other") => {
-    await Haptics.selectionAsync();
-    setSelectedGender(gender);
-    onSelect(gender);
-  };
+  const options = [
+    { value: "male", label: "Male" },
+    { value: "female", label: "Female" },
+    { value: "other", label: "Other" },
+  ];
 
   return (
-    <View style={styles.container}>
-      <Animated.View
-        style={[
-          styles.content,
-          {
-            opacity: fadeAnim,
-            transform: [{ scale: scaleAnim }],
-          },
-        ]}
-      >
-        <Text style={styles.title}>Gender</Text>
-
-        <View style={styles.optionsContainer}>
-          <TouchableOpacity
-            style={[
-              styles.option,
-              selectedGender === "male" && styles.selectedOption,
-            ]}
-            onPress={() => handleSelect("male")}
-          >
-            <Text
-              style={[
-                styles.optionText,
-                selectedGender === "male" && styles.optionTextSelected,
-              ]}
-            >
-              Male
-            </Text>
-          </TouchableOpacity>
-
-          <View style={styles.divider} />
-
-          <TouchableOpacity
-            style={[
-              styles.option,
-              selectedGender === "female" && styles.selectedOption,
-            ]}
-            onPress={() => handleSelect("female")}
-          >
-            <Text
-              style={[
-                styles.optionText,
-                selectedGender === "female" && styles.optionTextSelected,
-              ]}
-            >
-              Female
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[
-              styles.option,
-              selectedGender === "other" && styles.selectedOption,
-            ]}
-            onPress={() => handleSelect("other")}
-          >
-            <Text
-              style={[
-                styles.optionText,
-                selectedGender === "other" && styles.optionTextSelected,
-              ]}
-            >
-              Other
-            </Text>
-          </TouchableOpacity>
-        </View>
-      </Animated.View>
-    </View>
+    <SelectOption
+      title="Gender"
+      options={options}
+      onSelect={(value) => onSelect(value as "male" | "female" | "other")}
+    />
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  title: {
-    fontSize: 42,
-    fontFamily: "Platypi",
-    color: "#2A2A2A",
-    marginBottom: 32,
-  },
-  optionsContainer: {
-    marginTop: 16,
-  },
-  option: {
-    paddingVertical: 16,
-    borderRadius: 16,
-  },
-  selectedOption: {
-    backgroundColor: "#333333",
-    borderRadius: 16,
-  },
-  optionText: {
-    fontSize: 32,
-    fontFamily: "Platypi",
-    color: "#2A2A2A",
-    paddingHorizontal: 16,
-  },
-  optionTextSelected: {
-    color: "#FCE9BC",
-  },
-});

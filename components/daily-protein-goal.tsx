@@ -11,12 +11,18 @@ import { useEffect, useRef } from "react";
 
 interface DailyProteinGoalProps {
   targetWeight: number;
-  targetWeightUnit: "imperial" | "metric";
+  targetWeightUnit: "lbs" | "kg";
+  exerciseFrequency: "0-2" | "3-4" | "5+";
+  goal: "lose" | "gain" | "maintain";
+  onSelect: (proteinGoal: number) => void;
 }
 
 export const DailyProteinGoal = ({
   targetWeight,
   targetWeightUnit,
+  exerciseFrequency,
+  goal,
+  onSelect,
 }: DailyProteinGoalProps) => {
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0.8)).current;
@@ -24,7 +30,7 @@ export const DailyProteinGoal = ({
 
   const calculateProteinGoal = () => {
     let weightInPounds = targetWeight;
-    if (targetWeightUnit === "metric") {
+    if (targetWeightUnit === "kg") {
       weightInPounds = targetWeight * 2.20462;
     }
     return Math.round(weightInPounds);
@@ -52,7 +58,9 @@ export const DailyProteinGoal = ({
         duration: 1500,
         useNativeDriver: false,
       }),
-    ]).start();
+    ]).start(() => {
+      onSelect(proteinGoal);
+    });
   }, []);
 
   return (

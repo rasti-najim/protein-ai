@@ -10,11 +10,11 @@ import { useState, useRef, useEffect } from "react";
 import * as Haptics from "expo-haptics";
 
 interface WeightProps {
-  onSelect: (weight: number, unit: "imperial" | "metric") => void;
+  onSelect: (weight: number, unit: "lbs" | "kg") => void;
 }
 
 export const Weight = ({ onSelect }: WeightProps) => {
-  const [unit, setUnit] = useState<"imperial" | "metric">("imperial");
+  const [unit, setUnit] = useState<"lbs" | "kg">("lbs");
   const [weight, setWeight] = useState(185);
   const scrollViewRef = useRef<ScrollView>(null);
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -38,8 +38,8 @@ export const Weight = ({ onSelect }: WeightProps) => {
 
   const generateWeights = () => {
     const weights = [];
-    const min = unit === "imperial" ? 50 : 23;
-    const max = unit === "imperial" ? 400 : 181;
+    const min = unit === "lbs" ? 50 : 23;
+    const max = unit === "lbs" ? 400 : 181;
 
     for (let i = min; i <= max; i++) {
       weights.push(i);
@@ -47,9 +47,9 @@ export const Weight = ({ onSelect }: WeightProps) => {
     return weights;
   };
 
-  const handleUnitChange = (newUnit: "imperial" | "metric") => {
+  const handleUnitChange = (newUnit: "lbs" | "kg") => {
     setUnit(newUnit);
-    if (newUnit === "metric") {
+    if (newUnit === "kg") {
       const newWeight = Math.round(weight * 0.453592);
       setWeight(newWeight);
       onSelect(newWeight, newUnit);
@@ -63,7 +63,7 @@ export const Weight = ({ onSelect }: WeightProps) => {
   const handleScroll = (event: any) => {
     const y = event.nativeEvent.contentOffset.y;
     const newWeight = Math.round(
-      (unit === "imperial" ? 50 : 23) + Math.floor(y / 60)
+      (unit === "lbs" ? 50 : 23) + Math.floor(y / 60)
     );
     if (newWeight !== weight) {
       setWeight(newWeight);
@@ -87,13 +87,13 @@ export const Weight = ({ onSelect }: WeightProps) => {
 
         <View style={styles.unitSelector}>
           <TouchableOpacity
-            onPress={() => handleUnitChange("imperial")}
+            onPress={() => handleUnitChange("lbs")}
             style={styles.unitButton}
           >
             <Text
               style={[
                 styles.unitText,
-                unit === "imperial" ? styles.activeUnit : styles.inactiveUnit,
+                unit === "lbs" ? styles.activeUnit : styles.inactiveUnit,
               ]}
             >
               Imperial
@@ -101,13 +101,13 @@ export const Weight = ({ onSelect }: WeightProps) => {
           </TouchableOpacity>
           <Text style={styles.unitDivider}>|</Text>
           <TouchableOpacity
-            onPress={() => handleUnitChange("metric")}
+            onPress={() => handleUnitChange("kg")}
             style={styles.unitButton}
           >
             <Text
               style={[
                 styles.unitText,
-                unit === "metric" ? styles.activeUnit : styles.inactiveUnit,
+                unit === "kg" ? styles.activeUnit : styles.inactiveUnit,
               ]}
             >
               Metric
@@ -136,7 +136,7 @@ export const Weight = ({ onSelect }: WeightProps) => {
             </ScrollView>
             <View style={styles.unitLabelContainer}>
               <Text style={styles.unitLabel}>
-                {unit === "imperial" ? "lbs" : "kg"}
+                {unit === "lbs" ? "lbs" : "kg"}
               </Text>
             </View>
           </View>

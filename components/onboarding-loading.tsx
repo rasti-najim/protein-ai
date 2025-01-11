@@ -8,6 +8,7 @@ import { OnboardingData } from "@/app/onboarding";
 import supabase from "@/lib/supabase";
 import { useRouter } from "expo-router";
 import * as Haptics from "expo-haptics";
+import { useAuth } from "./auth-context";
 
 export const OnboardingLoading = ({
   onboardingData,
@@ -17,6 +18,8 @@ export const OnboardingLoading = ({
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const rotateAnim = useRef(new Animated.Value(0)).current;
   const router = useRouter();
+  const { user } = useAuth();
+
   useEffect(() => {
     const pulse = Animated.sequence([
       Animated.timing(pulseAnim, {
@@ -46,22 +49,25 @@ export const OnboardingLoading = ({
   });
 
   const saveOnboardingData = async () => {
+    console.log("saving onboarding data", onboardingData);
+
     try {
       const { data, error } = await supabase.from("users").insert({
+        id: user?.id,
         email: onboardingData.email,
         gender: onboardingData.gender,
         target_weight: onboardingData.targetWeight,
         target_weight_unit: onboardingData.targetWeightUnit,
         exercise_frequency: onboardingData.exerciseFrequency,
         goal: onboardingData.goal,
-        daily_protein_goal: onboardingData.dailyProteinGoal,
+        daily_protein_target: onboardingData.dailyProteinGoal,
       });
 
       if (error) throw error;
 
       console.log("Onboarding data saved successfully", data);
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      router.push("/home");
+      router.replace("/home");
     } catch (error) {
       console.error(error);
     }
