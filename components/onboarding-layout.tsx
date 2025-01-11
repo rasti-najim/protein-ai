@@ -25,7 +25,7 @@ interface OnboardingLayoutProps {
   isNextDisabled?: boolean;
   nextButtonText?: string;
   showLayout?: boolean;
-  lastStep?: boolean;
+  hideBottomBar?: boolean;
 }
 
 export const OnboardingLayout = ({
@@ -37,7 +37,7 @@ export const OnboardingLayout = ({
   isNextDisabled = false,
   nextButtonText = "Continue",
   showLayout = true,
-  lastStep = false,
+  hideBottomBar = false,
 }: OnboardingLayoutProps) => {
   if (!showLayout) {
     return <>{children}</>;
@@ -63,14 +63,15 @@ export const OnboardingLayout = ({
           >
             {children}
 
-            <View style={styles.bottomBar}>
-              <View style={styles.bottomContent}>
-                {!lastStep && (
+            {!hideBottomBar && (
+              <View style={styles.bottomBar}>
+                <View style={styles.bottomContent}>
                   <CircularProgress
                     progress={(currentStep + 1) / totalSteps}
                     size={48}
                     color="#4CAF50"
                     backgroundColor="#E0E0E0"
+                    strokeWidth={4}
                   >
                     <MaterialCommunityIcons
                       name="lightning-bolt"
@@ -78,23 +79,23 @@ export const OnboardingLayout = ({
                       color="#4CAF50"
                     />
                   </CircularProgress>
-                )}
+                </View>
 
                 <TouchableOpacity
                   style={[
                     styles.continueButton,
                     isNextDisabled && styles.buttonDisabled,
-                    lastStep && { width: "100%" },
+                    hideBottomBar && { width: "100%" },
                   ]}
                   onPress={onNext}
                   disabled={isNextDisabled}
                 >
                   <Text style={styles.continueButtonText}>
-                    {lastStep ? "Finish" : nextButtonText}
+                    {hideBottomBar ? "Finish" : nextButtonText}
                   </Text>
                 </TouchableOpacity>
               </View>
-            </View>
+            )}
           </View>
         </SafeAreaView>
       </KeyboardAvoidingView>

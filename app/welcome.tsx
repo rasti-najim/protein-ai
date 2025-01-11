@@ -4,17 +4,23 @@ import {
   TouchableOpacity,
   StyleSheet,
   ScrollView,
-  Animated,
   NativeSyntheticEvent,
   NativeScrollEvent,
   Dimensions,
-  Easing,
 } from "react-native";
 import { Image } from "expo-image";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { useRef, useState, useEffect } from "react";
 import * as Haptics from "expo-haptics";
+import Animated, {
+  withSpring,
+  useAnimatedStyle,
+  withSequence,
+  withTiming,
+  useSharedValue,
+  Easing,
+} from "react-native-reanimated";
 
 const width = Dimensions.get("window").width;
 const height = Dimensions.get("window").height;
@@ -24,18 +30,26 @@ export default function Page() {
   const [currentStep, setCurrentStep] = useState(0);
 
   const scrollViewRef = useRef<ScrollView>(null);
-  const fadeAnim = useRef(new Animated.Value(1)).current;
-  const logoScale = useRef(new Animated.Value(0.8)).current;
-  const modalSlide = useRef(new Animated.Value(height)).current;
-  const pulseAnim = useRef(new Animated.Value(1)).current;
+  const logoScale = useSharedValue(0.8);
+  const modalSlide = useSharedValue(height);
+  const dotScale = useSharedValue(1);
 
   useEffect(() => {
-    Animated.spring(modalSlide, {
-      toValue: 0,
-      useNativeDriver: true,
+    modalSlide.value = withSequence(
+      withTiming(0, {
+        duration: 800,
+        easing: Easing.out(Easing.back(1.5)),
+      }),
+      withSpring(0, {
+        damping: 20,
+        stiffness: 90,
+      })
+    );
+
+    logoScale.value = withSpring(1, {
       damping: 20,
       stiffness: 90,
-    }).start();
+    });
   }, []);
 
   const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
@@ -46,89 +60,75 @@ export default function Page() {
     }
   };
 
-  const scrollToStep = (step: number) => {
-    scrollViewRef.current?.scrollTo({
-      x: step * width,
-      animated: true,
-    });
-  };
-
   useEffect(() => {
-    Animated.sequence([
-      Animated.timing(modalSlide, {
-        toValue: 0,
+    modalSlide.value = withSequence(
+      withTiming(0, {
         duration: 800,
-        delay: 500,
-        useNativeDriver: true,
         easing: Easing.out(Easing.back(1.5)),
       }),
-      Animated.spring(logoScale, {
-        toValue: 1,
-        friction: 8,
-        tension: 40,
-        useNativeDriver: true,
-      }),
-    ]).start();
+      withSpring(0, {
+        damping: 20,
+        stiffness: 90,
+      })
+    );
   }, [logoScale, modalSlide]);
+
+  useEffect(() => {
+    dotScale.value = withSequence(
+      withTiming(1.4, { duration: 200 }),
+      withTiming(1, { duration: 150 })
+    );
+  }, [currentStep]);
 
   const onboardingSteps = [
     {
       title: "No more calorie counting.",
       subtitle: "A high-protein diet helps with:",
-      benefits: [
-        "Lean Muscle Growth",
-        "Fat Loss",
-        "Quicker Recovery",
-        "All-Day Energy",
-      ],
+      description:
+        "Lean Muscle Growth\nFat Loss\nQuick Recovery\nAll-Day Energy",
     },
     {
-      title: "No more calorie counting.",
-      subtitle: "A high-protein diet helps with:",
-      benefits: [
-        "Lean Muscle Growth",
-        "Fat Loss",
-        "Quicker Recovery",
-        "All-Day Energy",
-      ],
+      title: "A Personalized Protein Plan",
+      subtitle: "Based on your profile,",
+      description:
+        "We select the optimal amount of protein for you to eat every day.",
     },
     {
-      title: "No more calorie counting.",
-      subtitle: "A high-protein diet helps with:",
-      benefits: [
-        "Lean Muscle Growth",
-        "Fat Loss",
-        "Quicker Recovery",
-        "All-Day Energy",
-      ],
+      title: "Less Than 5 Minutes a Day",
+      subtitle: "With our AI scanning software,",
+      description:
+        "We streamline your journey to a lean, high-protein, and nutrient-dense diet.",
     },
   ];
 
   const renderStepIndicators = () => {
     return (
       <View style={styles.stepIndicatorContainer}>
-        {onboardingSteps.map((_, index) => (
-          <Animated.View
-            key={index}
-            style={[
-              styles.stepDot,
-              {
-                backgroundColor: currentStep === index ? "#007AFF" : "#D1D1D6",
-                transform: [
-                  {
-                    scale:
-                      currentStep === index
-                        ? fadeAnim.interpolate({
-                            inputRange: [0, 1],
-                            outputRange: [1, 1.2],
-                          })
-                        : 1,
-                  },
-                ],
-              },
-            ]}
-          />
-        ))}
+        {onboardingSteps.map((_, index) => {
+          const animatedStyle = useAnimatedStyle(() => {
+            return {
+              transform: [
+                {
+                  scale: currentStep === index ? dotScale.value : 1,
+                },
+              ],
+            };
+          });
+
+          return (
+            <Animated.View
+              key={index}
+              style={[
+                styles.stepDot,
+                {
+                  backgroundColor:
+                    currentStep === index ? "#333333" : "#D1D1D6",
+                },
+                animatedStyle,
+              ]}
+            />
+          );
+        })}
       </View>
     );
   };
@@ -144,65 +144,28 @@ export default function Page() {
             horizontal
             pagingEnabled
             showsHorizontalScrollIndicator={false}
-            onMomentumScrollEnd={handleScroll}
-            scrollEventThrottle={16}
+            // scrollEventThrottle={16}
+            // onMomentumScrollEnd={handleScroll}
           >
             {onboardingSteps.map((step, index) => (
-              <View key={index} style={styles.modalContent}>
+              <View key={index} style={[styles.modalContent, { width: width }]}>
                 <Text style={styles.tagline}>{step.title}</Text>
                 <Text style={styles.subtitle}>{step.subtitle}</Text>
-                <View style={styles.benefitsList}>
-                  {step.benefits.map((benefit, index) => (
-                    <Text style={styles.benefit} key={index}>
-                      {benefit}
-                    </Text>
-                  ))}
-                </View>
+                <Text style={styles.description}>{step.description}</Text>
               </View>
             ))}
           </ScrollView>
           {renderStepIndicators()}
-          <View style={styles.navigationButtons}>
-            <TouchableOpacity
-              style={[styles.button]}
-              onPress={() => {
-                const prevStep = Math.max(0, currentStep - 1);
-                scrollToStep(prevStep);
-              }}
-              disabled={currentStep === 0}
-            >
-              <Text
-                style={[
-                  styles.buttonText,
-                  currentStep === 0 && styles.buttonTextDisabled,
-                ]}
-              >
-                Previous
-              </Text>
-            </TouchableOpacity>
 
-            <TouchableOpacity
-              style={[styles.button]}
-              onPress={async () => {
-                if (currentStep < onboardingSteps.length - 1) {
-                  await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  scrollToStep(currentStep + 1);
-                } else {
-                  await Haptics.notificationAsync(
-                    Haptics.NotificationFeedbackType.Success
-                  );
-                  // router.push("/sign-up");
-                  router.push("/onboarding");
-                }
-              }}
-            >
-              <Text style={[styles.buttonText]}>
-                {currentStep === onboardingSteps.length - 1
-                  ? "Get Started"
-                  : "Next"}
-              </Text>
-            </TouchableOpacity>
-          </View>
+          <TouchableOpacity
+            style={[styles.button]}
+            onPress={async () => {
+              await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              router.push("/onboarding");
+            }}
+          >
+            <Text style={[styles.buttonText]}>Get Started</Text>
+          </TouchableOpacity>
         </View>
       </Animated.View>
     );
@@ -216,7 +179,11 @@ export default function Page() {
         contentFit="cover"
       />
       <SafeAreaView style={styles.content}>
-        <Text style={styles.title}>Protein AI</Text>
+        <Animated.Text
+          style={[styles.title, { transform: [{ scale: logoScale }] }]}
+        >
+          Protein AI
+        </Animated.Text>
       </SafeAreaView>
       <Modal />
     </SafeAreaView>
@@ -236,30 +203,29 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   title: {
-    fontSize: 42,
+    fontSize: 48,
     fontFamily: "Platypi",
-    color: "#FCE9BC", // Warm cream color
-    marginBottom: "50%",
-    fontWeight: "bold",
+    color: "#FCE9BC",
+    marginTop: 40,
+    marginBottom: 40,
   },
   tagline: {
-    fontSize: 42,
+    fontSize: 40,
     fontFamily: "Platypi",
     color: "#2A2A2A",
-    marginBottom: 24,
-    fontWeight: "600",
+    marginBottom: 16,
+    lineHeight: 52,
   },
   subtitle: {
-    fontSize: 24,
+    fontSize: 20,
+    fontWeight: "700",
     fontFamily: "Platypi",
     color: "#2A2A2A",
-    marginBottom: 24,
+    marginTop: 32,
+    marginBottom: 16,
   },
-  benefitsList: {
-    marginBottom: 32,
-  },
-  benefit: {
-    fontSize: 32,
+  description: {
+    fontSize: 24,
     fontFamily: "Platypi",
     color: "#2A2A2A",
     marginVertical: 8,
@@ -283,11 +249,13 @@ const styles = StyleSheet.create({
   button: {
     backgroundColor: "#333333",
     padding: 16,
-    borderRadius: 16,
+    borderRadius: 32,
     alignItems: "center",
+    marginHorizontal: 24,
+    marginBottom: 24,
   },
   buttonText: {
-    fontSize: 20,
+    fontSize: 24,
     fontFamily: "Platypi",
     color: "#FCE9BC",
     fontWeight: "600",
@@ -321,7 +289,6 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: "#D9D0C7",
   },
   activeStepDot: {
     backgroundColor: "#2A2A2A",

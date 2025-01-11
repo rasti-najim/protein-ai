@@ -163,10 +163,8 @@ export default function Onboarding() {
       onBack={handleBack}
       onNext={handleNext}
       isNextDisabled={isNextDisabled()}
-      // lastStep={currentStep === totalSteps - 1}
-      showLayout={
-        currentStep !== totalSteps - 2 && currentStep !== totalSteps - 1
-      }
+      hideBottomBar={currentStep === totalSteps - 2}
+      showLayout={currentStep !== totalSteps - 1}
     >
       {renderStep()}
     </OnboardingLayout>

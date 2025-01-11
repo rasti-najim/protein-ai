@@ -108,100 +108,62 @@ export default function CreateAccount({
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <Image
-        source={require("../assets/images/steak-dark.png")}
-        style={styles.backgroundImage}
-        contentFit="cover"
-      />
-      <SafeAreaView style={styles.content}>
-        <TouchableOpacity style={styles.backButton} onPress={handleBack}>
-          <FontAwesome6 name="chevron-left" size={24} color="#FCE9BC" />
+    <View style={styles.container}>
+      <Text style={styles.title}>Create Your{"\n"}Account</Text>
+
+      <View style={styles.buttonContainer}>
+        <TouchableOpacity
+          style={styles.authButton}
+          onPress={handleGoogleSignIn}
+        >
+          <FontAwesome6 name="google" size={24} color="#2A2A2A" />
+          <Text style={styles.authButtonText}>Continue with Google</Text>
         </TouchableOpacity>
 
-        <Text style={styles.title}>Create Account</Text>
+        <AppleAuthentication.AppleAuthenticationButton
+          buttonType={
+            AppleAuthentication.AppleAuthenticationButtonType.CONTINUE
+          }
+          buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
+          cornerRadius={16}
+          style={[styles.authButton, { height: 54 }]}
+          onPress={handleAppleSignIn}
+        />
+      </View>
 
-        <View style={styles.buttonContainer}>
-          <TouchableOpacity
-            style={styles.authButton}
-            onPress={handleGoogleSignIn}
-          >
-            <FontAwesome6 name="google" size={24} color="#2A2A2A" />
-            <Text style={styles.authButtonText}>Continue with Google</Text>
-          </TouchableOpacity>
-
-          <AppleAuthentication.AppleAuthenticationButton
-            buttonType={
-              AppleAuthentication.AppleAuthenticationButtonType.CONTINUE
-            }
-            buttonStyle={
-              AppleAuthentication.AppleAuthenticationButtonStyle.BLACK
-            }
-            cornerRadius={5}
-            style={[styles.authButton, { height: 54 }]}
-            onPress={handleAppleSignIn}
-          />
-
-          {/* <TouchableOpacity
-            style={styles.authButton}
-            onPress={handleAppleSignIn}
-          >
-            <FontAwesome6 name="apple" size={24} color="#2A2A2A" />
-            <Text style={styles.authButtonText}>Continue with Apple</Text>
-          </TouchableOpacity> */}
-        </View>
-
-        <Text style={styles.termsText}>
-          By continuing, you agree to our Terms of Service and Privacy Policy
-        </Text>
-      </SafeAreaView>
-    </SafeAreaView>
+      {/* <Text style={styles.termsText}>
+        By continuing, you agree to our Terms of Service and Privacy Policy
+      </Text> */}
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  backgroundImage: {
-    ...StyleSheet.absoluteFillObject,
-  },
-  content: {
-    flex: 1,
-    padding: 20,
-    justifyContent: "center",
-  },
-  backButton: {
-    position: "absolute",
-    top: 20,
-    left: 20,
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: "#333333",
-    justifyContent: "center",
-    alignItems: "center",
-    zIndex: 10,
+    backgroundColor: "#FCE9BC",
   },
   title: {
-    fontSize: 42,
+    fontSize: 50,
     fontFamily: "Platypi",
-    color: "#FCE9BC",
-    marginBottom: 40,
-    textAlign: "center",
+    color: "#2A2A2A",
+    marginBottom: 80,
   },
   buttonContainer: {
-    gap: 16,
+    gap: 20,
     marginBottom: 24,
+    alignItems: "center",
   },
   authButton: {
-    backgroundColor: "#FCE9BC",
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     padding: 16,
     borderRadius: 16,
     gap: 12,
+    width: "100%",
+    borderWidth: 1,
+    borderColor: "rgba(42, 42, 42, 0.1)",
   },
   authButtonText: {
     fontSize: 20,
@@ -209,11 +171,21 @@ const styles = StyleSheet.create({
     color: "#2A2A2A",
     fontWeight: "600",
   },
+  orText: {
+    fontSize: 20,
+    fontFamily: "Platypi",
+    color: "#2A2A2A",
+    marginVertical: 8,
+  },
   termsText: {
     fontSize: 14,
     fontFamily: "Platypi",
-    color: "#FCE9BC",
+    color: "#2A2A2A",
     textAlign: "center",
-    opacity: 0.8,
+    opacity: 0.6,
+    position: "absolute",
+    bottom: 40,
+    left: 20,
+    right: 20,
   },
 });
