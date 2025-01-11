@@ -25,6 +25,7 @@ import { useNavigation } from "@react-navigation/native";
 import { useRouter } from "expo-router";
 import * as Haptics from "expo-haptics";
 import * as ImagePicker from "expo-image-picker";
+import { Image } from "expo-image";
 
 interface Meal {
   name: string;
@@ -211,6 +212,11 @@ export default function Index() {
 
   return (
     <SafeAreaView style={styles.container}>
+      {/* <Image
+        source={require("@/assets/images/background.png")}
+        style={styles.background}
+        contentFit="cover"
+      /> */}
       <ScrollView
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}
@@ -304,6 +310,9 @@ const styles = StyleSheet.create({
   scrollView: {
     flex: 1,
     padding: 20,
+  },
+  background: {
+    ...StyleSheet.absoluteFillObject,
   },
   header: {
     flexDirection: "row",
