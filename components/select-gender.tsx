@@ -1,6 +1,13 @@
-import { Text, View, StyleSheet, TouchableOpacity } from "react-native";
-import { useState } from "react";
+import {
+  Text,
+  View,
+  StyleSheet,
+  TouchableOpacity,
+  Animated,
+} from "react-native";
+import { useState, useEffect, useRef } from "react";
 import * as Haptics from "expo-haptics";
+
 interface SelectGenderProps {
   onSelect: (gender: "male" | "female" | "other") => void;
 }
@@ -9,6 +16,24 @@ export const SelectGender = ({ onSelect }: SelectGenderProps) => {
   const [selectedGender, setSelectedGender] = useState<
     "male" | "female" | "other" | null
   >(null);
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const scaleAnim = useRef(new Animated.Value(0.8)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 600,
+        useNativeDriver: true,
+      }),
+      Animated.spring(scaleAnim, {
+        toValue: 1,
+        tension: 50,
+        friction: 7,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, []);
 
   const handleSelect = async (gender: "male" | "female" | "other") => {
     await Haptics.selectionAsync();
@@ -18,62 +43,72 @@ export const SelectGender = ({ onSelect }: SelectGenderProps) => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Gender</Text>
+      <Animated.View
+        style={[
+          styles.content,
+          {
+            opacity: fadeAnim,
+            transform: [{ scale: scaleAnim }],
+          },
+        ]}
+      >
+        <Text style={styles.title}>Gender</Text>
 
-      <View style={styles.optionsContainer}>
-        <TouchableOpacity
-          style={[
-            styles.option,
-            selectedGender === "male" && styles.selectedOption,
-          ]}
-          onPress={() => handleSelect("male")}
-        >
-          <Text
+        <View style={styles.optionsContainer}>
+          <TouchableOpacity
             style={[
-              styles.optionText,
-              selectedGender === "male" && styles.optionTextSelected,
+              styles.option,
+              selectedGender === "male" && styles.selectedOption,
             ]}
+            onPress={() => handleSelect("male")}
           >
-            Male
-          </Text>
-        </TouchableOpacity>
+            <Text
+              style={[
+                styles.optionText,
+                selectedGender === "male" && styles.optionTextSelected,
+              ]}
+            >
+              Male
+            </Text>
+          </TouchableOpacity>
 
-        <View style={styles.divider} />
+          <View style={styles.divider} />
 
-        <TouchableOpacity
-          style={[
-            styles.option,
-            selectedGender === "female" && styles.selectedOption,
-          ]}
-          onPress={() => handleSelect("female")}
-        >
-          <Text
+          <TouchableOpacity
             style={[
-              styles.optionText,
-              selectedGender === "female" && styles.optionTextSelected,
+              styles.option,
+              selectedGender === "female" && styles.selectedOption,
             ]}
+            onPress={() => handleSelect("female")}
           >
-            Female
-          </Text>
-        </TouchableOpacity>
+            <Text
+              style={[
+                styles.optionText,
+                selectedGender === "female" && styles.optionTextSelected,
+              ]}
+            >
+              Female
+            </Text>
+          </TouchableOpacity>
 
-        <TouchableOpacity
-          style={[
-            styles.option,
-            selectedGender === "other" && styles.selectedOption,
-          ]}
-          onPress={() => handleSelect("other")}
-        >
-          <Text
+          <TouchableOpacity
             style={[
-              styles.optionText,
-              selectedGender === "other" && styles.optionTextSelected,
+              styles.option,
+              selectedGender === "other" && styles.selectedOption,
             ]}
+            onPress={() => handleSelect("other")}
           >
-            Other
-          </Text>
-        </TouchableOpacity>
-      </View>
+            <Text
+              style={[
+                styles.optionText,
+                selectedGender === "other" && styles.optionTextSelected,
+              ]}
+            >
+              Other
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </Animated.View>
     </View>
   );
 };

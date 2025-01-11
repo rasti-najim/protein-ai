@@ -1,13 +1,14 @@
 import React from "react";
 import { View, StyleSheet } from "react-native";
 import Svg, { Circle } from "react-native-svg";
+import { Animated } from "react-native";
 
 interface CircularProgressProps {
-  progress: number;
-  size?: number;
-  strokeWidth?: number;
-  color?: string;
-  backgroundColor?: string;
+  progress: number | Animated.Value;
+  size: number;
+  strokeWidth: number;
+  color: string;
+  backgroundColor: string;
   children?: React.ReactNode;
 }
 
@@ -21,7 +22,7 @@ export const CircularProgress = ({
 }: CircularProgressProps) => {
   const radius = (size - strokeWidth) / 2;
   const circumference = radius * 2 * Math.PI;
-  const progressOffset = circumference - progress * circumference;
+  const progressOffset = circumference - (progress as number) * circumference;
 
   return (
     <View style={styles.container}>

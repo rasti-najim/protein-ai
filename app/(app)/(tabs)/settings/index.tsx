@@ -2,6 +2,8 @@ import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { FontAwesome6 } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
+import supabase from "@/lib/supabase";
+import * as Haptics from "expo-haptics";
 
 export default function Settings() {
   const router = useRouter();
@@ -19,6 +21,16 @@ export default function Settings() {
     },
   ];
 
+  const handleLogout = async () => {
+    try {
+      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      await supabase.auth.signOut();
+      // The AuthProvider will handle the redirect to /welcome
+    } catch (error) {
+      console.error("Error signing out:", error);
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <Text style={styles.title}>Settings</Text>
@@ -28,13 +40,17 @@ export default function Settings() {
           <TouchableOpacity
             key={index}
             style={styles.menuItem}
-            // onPress={() => router.push(item.route)}
+            onPress={() => router.push(item.route)}
           >
             <Text style={styles.menuText}>{item.title}</Text>
             <FontAwesome6 name="chevron-right" size={24} color="#2A2A2A" />
           </TouchableOpacity>
         ))}
       </View>
+
+      <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+        <Text style={styles.logoutText}>Log Out</Text>
+      </TouchableOpacity>
     </SafeAreaView>
   );
 }
@@ -64,5 +80,18 @@ const styles = StyleSheet.create({
     fontSize: 32,
     fontFamily: "Platypi",
     color: "#2A2A2A",
+  },
+  logoutButton: {
+    marginTop: "auto",
+    backgroundColor: "#333333",
+    padding: 16,
+    borderRadius: 16,
+    alignItems: "center",
+  },
+  logoutText: {
+    fontSize: 20,
+    fontFamily: "Platypi",
+    color: "#FCE9BC",
+    fontWeight: "600",
   },
 });

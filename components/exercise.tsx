@@ -1,5 +1,11 @@
-import { Text, View, StyleSheet, TouchableOpacity } from "react-native";
-import { useState } from "react";
+import {
+  Text,
+  View,
+  StyleSheet,
+  TouchableOpacity,
+  Animated,
+} from "react-native";
+import { useState, useEffect, useRef } from "react";
 import * as Haptics from "expo-haptics";
 
 interface ExerciseProps {
@@ -8,6 +14,24 @@ interface ExerciseProps {
 
 export const Exercise = ({ onSelect }: ExerciseProps) => {
   const [selected, setSelected] = useState<"0-2" | "3-4" | "5+" | null>(null);
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const scaleAnim = useRef(new Animated.Value(0.8)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 600,
+        useNativeDriver: true,
+      }),
+      Animated.spring(scaleAnim, {
+        toValue: 1,
+        tension: 50,
+        friction: 7,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, []);
 
   const handleSelect = async (frequency: "0-2" | "3-4" | "5+") => {
     await Haptics.selectionAsync();
@@ -17,54 +41,64 @@ export const Exercise = ({ onSelect }: ExerciseProps) => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Exercise</Text>
-      <Text style={styles.subtitle}>
-        How many times a week{"\n"}do you workout?
-      </Text>
+      <Animated.View
+        style={[
+          styles.content,
+          {
+            opacity: fadeAnim,
+            transform: [{ scale: scaleAnim }],
+          },
+        ]}
+      >
+        <Text style={styles.title}>Exercise</Text>
+        <Text style={styles.subtitle}>
+          How many times a week{"\n"}do you workout?
+        </Text>
 
-      <View style={styles.optionsContainer}>
-        <TouchableOpacity
-          style={[styles.option, selected === "0-2" && styles.selectedOption]}
-          onPress={() => handleSelect("0-2")}
-        >
-          <Text
-            style={[
-              styles.optionText,
-              selected === "0-2" && styles.optionTextSelected,
-            ]}
+        <View style={styles.optionsContainer}>
+          <TouchableOpacity
+            style={[styles.option, selected === "0-2" && styles.selectedOption]}
+            onPress={() => handleSelect("0-2")}
           >
-            0-2
-          </Text>
-        </TouchableOpacity>
+            <Text
+              style={[
+                styles.optionText,
+                selected === "0-2" && styles.optionTextSelected,
+              ]}
+            >
+              0-2
+            </Text>
+          </TouchableOpacity>
 
-        <TouchableOpacity
-          style={[styles.option, selected === "3-4" && styles.selectedOption]}
-          onPress={() => handleSelect("3-4")}
-        >
-          <Text
-            style={[
-              styles.optionText,
-              selected === "3-4" && styles.optionTextSelected,
-            ]}
+          <TouchableOpacity
+            style={[styles.option, selected === "3-4" && styles.selectedOption]}
+            onPress={() => handleSelect("3-4")}
           >
-            3-4
-          </Text>
-        </TouchableOpacity>
+            <Text
+              style={[
+                styles.optionText,
+                selected === "3-4" && styles.optionTextSelected,
+              ]}
+            >
+              3-4
+            </Text>
+          </TouchableOpacity>
 
-        <TouchableOpacity
-          style={[styles.option, selected === "5+" && styles.selectedOption]}
-          onPress={() => handleSelect("5+")}
-        >
-          <Text
-            style={[
-              styles.optionText,
-              selected === "5+" && styles.optionTextSelected,
-            ]}
+          <TouchableOpacity
+            style={[styles.option, selected === "5+" && styles.selectedOption]}
+            onPress={() => handleSelect("5+")}
           >
-            5+
-          </Text>
-        </TouchableOpacity>
-      </View>
+            <Text
+              style={[
+                styles.optionText,
+                selected === "5+" && styles.optionTextSelected,
+              ]}
+            >
+              5+
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </Animated.View>
     </View>
   );
 };

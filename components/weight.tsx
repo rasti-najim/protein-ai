@@ -4,8 +4,9 @@ import {
   StyleSheet,
   TouchableOpacity,
   ScrollView,
+  Animated,
 } from "react-native";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import * as Haptics from "expo-haptics";
 
 interface WeightProps {
@@ -16,6 +17,24 @@ export const Weight = ({ onSelect }: WeightProps) => {
   const [unit, setUnit] = useState<"imperial" | "metric">("imperial");
   const [weight, setWeight] = useState(185);
   const scrollViewRef = useRef<ScrollView>(null);
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const scaleAnim = useRef(new Animated.Value(0.8)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 600,
+        useNativeDriver: true,
+      }),
+      Animated.spring(scaleAnim, {
+        toValue: 1,
+        tension: 50,
+        friction: 7,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, []);
 
   const generateWeights = () => {
     const weights = [];
@@ -55,64 +74,74 @@ export const Weight = ({ onSelect }: WeightProps) => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Weight</Text>
+      <Animated.View
+        style={[
+          styles.content,
+          {
+            opacity: fadeAnim,
+            transform: [{ scale: scaleAnim }],
+          },
+        ]}
+      >
+        <Text style={styles.title}>Weight</Text>
 
-      <View style={styles.unitSelector}>
-        <TouchableOpacity
-          onPress={() => handleUnitChange("imperial")}
-          style={styles.unitButton}
-        >
-          <Text
-            style={[
-              styles.unitText,
-              unit === "imperial" ? styles.activeUnit : styles.inactiveUnit,
-            ]}
+        <View style={styles.unitSelector}>
+          <TouchableOpacity
+            onPress={() => handleUnitChange("imperial")}
+            style={styles.unitButton}
           >
-            Imperial
-          </Text>
-        </TouchableOpacity>
-        <Text style={styles.unitDivider}>|</Text>
-        <TouchableOpacity
-          onPress={() => handleUnitChange("metric")}
-          style={styles.unitButton}
-        >
-          <Text
-            style={[
-              styles.unitText,
-              unit === "metric" ? styles.activeUnit : styles.inactiveUnit,
-            ]}
-          >
-            Metric
-          </Text>
-        </TouchableOpacity>
-      </View>
-
-      <View style={styles.pickerContainer}>
-        <View style={styles.pickerHighlight} />
-        <View style={styles.pickerContent}>
-          <ScrollView
-            ref={scrollViewRef}
-            style={styles.picker}
-            showsVerticalScrollIndicator={false}
-            snapToInterval={60}
-            onScroll={handleScroll}
-            scrollEventThrottle={16}
-          >
-            <View style={styles.pickerPadding} />
-            {generateWeights().map((num) => (
-              <View key={num} style={styles.pickerItem}>
-                <Text style={styles.pickerText}>{num}</Text>
-              </View>
-            ))}
-            <View style={styles.pickerPadding} />
-          </ScrollView>
-          <View style={styles.unitLabelContainer}>
-            <Text style={styles.unitLabel}>
-              {unit === "imperial" ? "lbs" : "kg"}
+            <Text
+              style={[
+                styles.unitText,
+                unit === "imperial" ? styles.activeUnit : styles.inactiveUnit,
+              ]}
+            >
+              Imperial
             </Text>
+          </TouchableOpacity>
+          <Text style={styles.unitDivider}>|</Text>
+          <TouchableOpacity
+            onPress={() => handleUnitChange("metric")}
+            style={styles.unitButton}
+          >
+            <Text
+              style={[
+                styles.unitText,
+                unit === "metric" ? styles.activeUnit : styles.inactiveUnit,
+              ]}
+            >
+              Metric
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.pickerContainer}>
+          <View style={styles.pickerHighlight} />
+          <View style={styles.pickerContent}>
+            <ScrollView
+              ref={scrollViewRef}
+              style={styles.picker}
+              showsVerticalScrollIndicator={false}
+              snapToInterval={60}
+              onScroll={handleScroll}
+              scrollEventThrottle={16}
+            >
+              <View style={styles.pickerPadding} />
+              {generateWeights().map((num) => (
+                <View key={num} style={styles.pickerItem}>
+                  <Text style={styles.pickerText}>{num}</Text>
+                </View>
+              ))}
+              <View style={styles.pickerPadding} />
+            </ScrollView>
+            <View style={styles.unitLabelContainer}>
+              <Text style={styles.unitLabel}>
+                {unit === "imperial" ? "lbs" : "kg"}
+              </Text>
+            </View>
           </View>
         </View>
-      </View>
+      </Animated.View>
     </View>
   );
 };
@@ -197,5 +226,8 @@ const styles = StyleSheet.create({
   },
   pickerPadding: {
     height: 120,
+  },
+  content: {
+    flex: 1,
   },
 });

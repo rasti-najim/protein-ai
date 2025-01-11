@@ -7,14 +7,15 @@ import { Perfect } from "@/components/perfect";
 import { DailyProteinGoal } from "@/components/daily-protein-goal";
 import * as Haptics from "expo-haptics";
 import { router } from "expo-router";
-import { CreateAccount } from "./create-account";
+import CreateAccount from "../components/create-account";
+import { OnboardingLoading } from "@/components/onboarding-loading";
 
-interface OnboardingData {
+export interface OnboardingData {
   gender: "male" | "female" | "other" | null;
   age: number | null;
   height: number | null;
-  weight: number | null;
   targetWeight: number | null;
+  targetWeightUnit: "imperial" | "metric" | null;
   exerciseFrequency: "0-2" | "3-4" | "5+" | null;
   goal: "lose" | "gain" | "maintain" | null;
   dailyProteinGoal: number | null;
@@ -24,13 +25,13 @@ interface OnboardingData {
 
 export default function Onboarding() {
   const [currentStep, setCurrentStep] = useState<number>(0);
-  const totalSteps = 6;
+  const totalSteps = 7;
   const [data, setData] = useState<OnboardingData>({
     gender: null,
     age: null,
     height: null,
-    weight: null,
     targetWeight: null,
+    targetWeightUnit: null,
     exerciseFrequency: null,
     goal: null,
     dailyProteinGoal: null,
@@ -46,15 +47,23 @@ export default function Onboarding() {
     setData((prev) => ({ ...prev, gender: selected }));
   };
 
-  const handleWeightSelect = (selected: number) => {
-    setData((prev) => ({ ...prev, weight: selected }));
+  const handleWeightSelect = (
+    selected: number,
+    unit: "imperial" | "metric"
+  ) => {
+    setData((prev) => ({
+      ...prev,
+      targetWeight: selected,
+      targetWeightUnit: unit,
+    }));
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (currentStep < totalSteps - 1) {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Soft);
+      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Soft);
       setCurrentStep(currentStep + 1);
     } else {
+      console.log("saving onboarding data: ", data);
       router.push("/home");
     }
   };
@@ -70,7 +79,7 @@ export default function Onboarding() {
       case 0:
         return !data.gender;
       case 1:
-        return !data.weight;
+        return !data.targetWeight || !data.targetWeightUnit;
       case 2:
         return !data.exerciseFrequency;
       case 3:
@@ -78,6 +87,8 @@ export default function Onboarding() {
       case 4:
         return false;
       case 5:
+        return false;
+      case 6:
         return false;
       default:
         return false;
@@ -93,33 +104,42 @@ export default function Onboarding() {
       case 2:
         return <Exercise onSelect={handleExerciseSelect} />;
       case 3:
-        return <Perfect onNext={handleNext} />;
+        return <Perfect />;
       case 4:
-        return <DailyProteinGoal proteinGoal={100} onFinish={handleNext} />;
+        return (
+          <DailyProteinGoal
+            targetWeight={data.targetWeight ?? 0}
+            targetWeightUnit={data.targetWeightUnit ?? "imperial"}
+          />
+        );
       case 5:
         return (
           <CreateAccount
             title="Create Account"
             onBack={handleBack}
             type="signup"
-            onGoogleSignIn={(user) => {
+            onGoogleSignIn={async (user) => {
               console.log("Google Sign In");
               setData((prev) => ({
                 ...prev,
                 email: user.email ?? null,
                 hasAccount: true,
               }));
+              await handleNext();
             }}
-            onAppleSignIn={(user) => {
+            onAppleSignIn={async (user) => {
               console.log("Apple Sign In");
               setData((prev) => ({
                 ...prev,
                 email: user.email ?? null,
                 hasAccount: true,
               }));
+              await handleNext();
             }}
           />
         );
+      case 6:
+        return <OnboardingLoading onboardingData={data} />;
       default:
         return null;
     }
@@ -133,7 +153,9 @@ export default function Onboarding() {
       onNext={handleNext}
       isNextDisabled={isNextDisabled()}
       // lastStep={currentStep === totalSteps - 1}
-      showLayout={currentStep !== totalSteps - 1}
+      showLayout={
+        currentStep !== totalSteps - 2 && currentStep !== totalSteps - 1
+      }
     >
       {renderStep()}
     </OnboardingLayout>
