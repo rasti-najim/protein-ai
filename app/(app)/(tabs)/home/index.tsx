@@ -26,6 +26,10 @@ import { useRouter } from "expo-router";
 import * as Haptics from "expo-haptics";
 import * as ImagePicker from "expo-image-picker";
 import { Image } from "expo-image";
+import supabase from "@/lib/supabase";
+import { decode } from "base64-arraybuffer";
+import { DateTime } from "luxon";
+import { useAuth } from "@/components/auth-context";
 
 interface Meal {
   name: string;
@@ -33,6 +37,7 @@ interface Meal {
 }
 
 export default function Index() {
+  const { user } = useAuth();
   const [isBottomSheetVisible, setIsBottomSheetVisible] = useState(false);
   const [isFabExpanded, setIsFabExpanded] = useState(false);
   const menuAnimation = useRef(new Animated.Value(0)).current;
@@ -44,6 +49,7 @@ export default function Index() {
   const [menuItemWidths, setMenuItemWidths] = useState<{
     [key: string]: number;
   }>({});
+  const [photo, setPhoto] = useState<ImagePicker.ImagePickerAsset | null>(null);
 
   const dailyGoal = 200;
   const currentProtein = 115;
@@ -97,10 +103,48 @@ export default function Index() {
       allowsEditing: true,
       aspect: [4, 3],
       quality: 1,
+      base64: true,
     });
 
     if (!result.canceled) {
       // Navigate to upload screen with the selected image
+      setPhoto(result.assets[0]);
+      await handleUpload(result.assets[0]);
+    }
+  };
+
+  const handleUpload = async (photo: ImagePicker.ImagePickerAsset) => {
+    try {
+      const { data, error } = await supabase.storage
+        .from("temp")
+        .upload(
+          `${user?.id}/${DateTime.now().toISO()}.${
+            photo?.fileName?.split(".")[1]
+          }`,
+          decode(photo?.base64 || ""),
+          {
+            contentType: `${photo?.mimeType}`,
+          }
+        );
+
+      if (error) {
+        console.error(error);
+        return;
+      }
+
+      const { data: scanData, error: scanError } =
+        await supabase.functions.invoke("scan-photo", {
+          body: { imagePath: data.path, createdAt: DateTime.now().toISO() },
+        });
+
+      if (scanError) {
+        console.error(scanError);
+        return;
+      }
+
+      console.log("scanData", scanData);
+    } catch (error) {
+      console.error(error);
     }
   };
 
