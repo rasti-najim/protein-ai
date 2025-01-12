@@ -74,7 +74,6 @@ export type Database = {
           current_streak: number
           id: number
           max_streak: number
-          streak_level_id: number
           updated_at: string | null
           user_id: string
         }
@@ -83,7 +82,6 @@ export type Database = {
           current_streak?: number
           id?: number
           max_streak?: number
-          streak_level_id: number
           updated_at?: string | null
           user_id: string
         }
@@ -92,19 +90,10 @@ export type Database = {
           current_streak?: number
           id?: number
           max_streak?: number
-          streak_level_id?: number
           updated_at?: string | null
           user_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "streaks_streak_level_id_fkey"
-            columns: ["streak_level_id"]
-            isOneToOne: false
-            referencedRelation: "streak_levels"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       users: {
         Row: {
@@ -144,7 +133,30 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      user_streak_view: {
+        Row: {
+          current_streak: number | null
+          max_streak: number | null
+          streak_emoji: string | null
+          streak_name: string | null
+          user_id: string | null
+        }
+        Insert: {
+          current_streak?: number | null
+          max_streak?: number | null
+          streak_emoji?: never
+          streak_name?: never
+          user_id?: string | null
+        }
+        Update: {
+          current_streak?: number | null
+          max_streak?: number | null
+          streak_emoji?: never
+          streak_name?: never
+          user_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       [_ in never]: never

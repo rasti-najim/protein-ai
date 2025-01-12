@@ -41,9 +41,11 @@ export interface Meal {
   // created_at: string;
 }
 
-interface Streak {
-  streak: number;
-  emoji: string;
+interface StreakData {
+  current_streak: number;
+  max_streak: number;
+  streak_name: string;
+  streak_emoji: string;
 }
 
 export default function Index() {
@@ -67,18 +69,29 @@ export default function Index() {
   const [showGoalReached, setShowGoalReached] = useState(false);
   const [hasShownGoalReached, setHasShownGoalReached] = useState(false);
   const { photo: scannedPhoto } = usePhoto();
-  const [streak, setStreak] = useState<Streak>({ streak: 0, emoji: "" });
+  const [streak, setStreak] = useState<StreakData>({
+    current_streak: 0,
+    max_streak: 0,
+    streak_name: "",
+    streak_emoji: "",
+  });
 
   useEffect(() => {
     const fetchStreak = async () => {
-      const { data, error } = await supabase
-        .from("streaks")
-        .select("*, streak_level(*)")
-        .eq("user_id", user?.id!);
-      setStreak({
-        streak: data?.[0]?.current_streak || 0,
-        emoji: data?.[0]?.streak_level?.emoji || "",
-      });
+      try {
+        const { data, error } = await supabase
+          .from("user_streak_view")
+          .select("*")
+          .eq("user_id", user?.id!);
+        setStreak({
+          current_streak: data?.[0]?.current_streak || 0,
+          max_streak: data?.[0]?.max_streak || 0,
+          streak_name: data?.[0]?.streak_name || "",
+          streak_emoji: data?.[0]?.streak_emoji || "",
+        });
+      } catch (error) {
+        console.error(error);
+      }
     };
     fetchStreak();
   }, [user?.id]);
@@ -133,6 +146,10 @@ export default function Index() {
     if (currentProtein >= dailyGoal && !hasShownGoalReached) {
       setShowGoalReached(true);
       setHasShownGoalReached(true);
+      setStreak((prev) => ({
+        ...prev,
+        current_streak: prev.current_streak + 1,
+      }));
     }
   }, [currentProtein, dailyGoal]);
 
@@ -390,7 +407,9 @@ export default function Index() {
           <Text style={styles.title}>Protein AI</Text>
           <Pressable onPress={handleBadgePress}>
             <View style={styles.badge}>
-              <Text style={styles.badgeNumber}>{streak} 🌱</Text>
+              <Text style={styles.badgeNumber}>
+                {streak.current_streak} {streak.streak_emoji}
+              </Text>
             </View>
           </Pressable>
         </View>
