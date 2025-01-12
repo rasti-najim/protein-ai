@@ -4,67 +4,108 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
+  StyleProp,
+  TextStyle,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import { Redirect, useRouter } from "expo-router";
 import { BarChart } from "react-native-gifted-charts";
+import { useEffect, useState } from "react";
+import supabase from "@/lib/supabase";
+import { useAuth } from "@/components/auth-context";
 
-interface DayData {
-  day: string;
-  shortDay: string;
-  protein: number;
-  goal: number;
+interface BarData {
+  value: number;
+  label: string;
+  frontColor: string;
+  labelTextStyle: StyleProp<TextStyle>;
 }
 
 export default function Progress() {
+  const { user } = useAuth();
   const router = useRouter();
   const weeklyGoal = 154;
+  const [barData, setBarData] = useState<BarData[]>([]);
 
-  const barData = [
-    {
-      value: 125,
-      label: "S",
-      frontColor: "#A8D1FF",
-      labelTextStyle: styles.chartLabel,
-    },
-    {
-      value: 163,
-      label: "M",
-      frontColor: "#4A90E2",
-      labelTextStyle: styles.chartLabel,
-    },
-    {
-      value: 73,
-      label: "T",
-      frontColor: "#FF6B6B",
-      labelTextStyle: styles.chartLabel,
-    },
-    {
-      value: 125,
-      label: "W",
-      frontColor: "#A8D1FF",
-      labelTextStyle: styles.chartLabel,
-    },
-    {
-      value: 125,
-      label: "T",
-      frontColor: "#A8D1FF",
-      labelTextStyle: styles.chartLabel,
-    },
-    {
-      value: 125,
-      label: "F",
-      frontColor: "#A8D1FF",
-      labelTextStyle: styles.chartLabel,
-    },
-    {
-      value: 125,
-      label: "S",
-      frontColor: "#A8D1FF",
-      labelTextStyle: styles.chartLabel,
-    },
-  ];
+  if (!user) {
+    return <Redirect href="/onboarding" />;
+  }
+
+  useEffect(() => {
+    const fetchWeeklyMeals = async () => {
+      const { data: weeklyMeals, error } = await supabase
+        .from("weekly_meals_view")
+        .select("*")
+        .eq("user_id", user.id)
+        .limit(7); // Get last 7 weeks
+
+      if (error) {
+        console.error("Error fetching weekly meals:", error);
+        return;
+      }
+
+      if (weeklyMeals) {
+        setBarData(
+          weeklyMeals.map((week) => ({
+            value: week.total_protein,
+            label: new Date(week.week_start).toLocaleDateString("en-US", {
+              month: "short",
+              day: "numeric",
+            }),
+            frontColor: "#A8D1FF",
+            labelTextStyle: styles.chartLabel,
+          }))
+        );
+      }
+    };
+    fetchWeeklyMeals();
+  }, [user?.id]);
+
+  // const barData = [
+  //   {
+  //     value: 125,
+  //     label: "S",
+  //     frontColor: "#A8D1FF",
+  //     labelTextStyle: styles.chartLabel,
+  //   },
+  //   {
+  //     value: 163,
+  //     label: "M",
+  //     frontColor: "#4A90E2",
+  //     labelTextStyle: styles.chartLabel,
+  //   },
+  //   {
+  //     value: 73,
+  //     label: "T",
+  //     frontColor: "#FF6B6B",
+  //     labelTextStyle: styles.chartLabel,
+  //   },
+  //   {
+  //     value: 125,
+  //     label: "W",
+  //     frontColor: "#A8D1FF",
+  //     labelTextStyle: styles.chartLabel,
+  //   },
+  //   {
+  //     value: 125,
+  //     label: "T",
+  //     frontColor: "#A8D1FF",
+  //     labelTextStyle: styles.chartLabel,
+  //   },
+  //   {
+  //     value: 125,
+  //     label: "F",
+  //     frontColor: "#A8D1FF",
+  //     labelTextStyle: styles.chartLabel,
+  //   },
+  //   {
+  //     value: 125,
+  //     label: "S",
+  //     frontColor: "#A8D1FF",
+  //     labelTextStyle: styles.chartLabel,
+  //   },
+  // ];
 
   const historyDates = [
     "Tuesday 1/7/25",
@@ -100,7 +141,7 @@ export default function Progress() {
             yAxisThickness={0}
             maxValue={200}
             noOfSections={4}
-            renderTooltip={(item) => (
+            renderTooltip={(item: any) => (
               <View style={styles.proteinBadge}>
                 <Text style={styles.proteinText}>{item.value}g</Text>
               </View>
@@ -115,7 +156,7 @@ export default function Progress() {
             <TouchableOpacity
               key={index}
               style={styles.historyItem}
-              onPress={() => router.push(`/history/${date}`)}
+              // onPress={() => router.push(`/history/${date}`)}
             >
               <Text style={styles.historyDate}>{date}</Text>
               <MaterialCommunityIcons
