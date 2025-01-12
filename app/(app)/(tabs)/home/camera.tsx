@@ -5,7 +5,7 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ScanFrame } from "@/components/scan-frame";
 import { useRouter } from "expo-router";
-import { PostScan } from "@/components/post-scan";
+import { usePhoto } from "@/components/photo-context";
 
 export default function Page() {
   const insets = useSafeAreaInsets();
@@ -13,18 +13,24 @@ export default function Page() {
   const [flash, setFlash] = useState(false);
   const cameraRef = useRef<CameraView>(null);
   const router = useRouter();
-  const [photo, setPhoto] = useState<string | null>(null);
-  const [isScanning, setIsScanning] = useState(false);
-  const [isPostScan, setIsPostScan] = useState(false);
+  const { setPhoto } = usePhoto();
 
   const handleCapture = async () => {
+    if (!cameraRef.current) return;
+
     console.log("Capture pressed");
-    const photo = await cameraRef.current?.takePictureAsync();
-    console.log(photo);
-    setPhoto(photo?.uri ?? null);
-    setIsScanning(true);
-    setIsPostScan(true);
-    // TODO: Implement camera capture
+    try {
+      const photo = await cameraRef.current.takePictureAsync({
+        quality: 1,
+        base64: true,
+      });
+      if (!photo) return;
+      console.log(photo);
+      setPhoto(photo);
+      router.dismiss();
+    } catch (error) {
+      console.error("Error capturing photo", error);
+    }
   };
 
   if (!permission) {
@@ -43,10 +49,6 @@ export default function Page() {
         </TouchableOpacity>
       </View>
     );
-  }
-
-  if (isPostScan) {
-    return <PostScan foodName="Chicken" proteinAmount={20} onEdit={() => {}} />;
   }
 
   return (

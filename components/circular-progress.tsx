@@ -22,7 +22,10 @@ export const CircularProgress = ({
 }: CircularProgressProps) => {
   const radius = (size - strokeWidth) / 2;
   const circumference = radius * 2 * Math.PI;
-  const progressOffset = circumference - (progress as number) * circumference;
+  const clampedProgress =
+    typeof progress === "number" ? Math.min(1, progress) : progress;
+  const progressOffset =
+    circumference - (clampedProgress as number) * circumference;
 
   return (
     <View style={styles.container}>

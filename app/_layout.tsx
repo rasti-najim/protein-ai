@@ -1,6 +1,7 @@
 import { Slot, Stack } from "expo-router";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { AuthProvider } from "@/components/auth-context";
+import { PhotoProvider } from "@/components/photo-context";
 import { useEffect } from "react";
 import Superwall from "@superwall/react-native-superwall";
 
@@ -13,9 +14,11 @@ export default function RootLayout() {
 
   return (
     <AuthProvider>
-      <GestureHandlerRootView>
-        <Slot />
-      </GestureHandlerRootView>
+      <PhotoProvider>
+        <GestureHandlerRootView>
+          <Slot />
+        </GestureHandlerRootView>
+      </PhotoProvider>
     </AuthProvider>
   );
 }

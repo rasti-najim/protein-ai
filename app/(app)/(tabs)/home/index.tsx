@@ -11,7 +11,7 @@ import {
   ViewStyle,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { FontAwesome6, MaterialCommunityIcons } from "@expo/vector-icons";
+import { FontAwesome6 } from "@expo/vector-icons";
 import { CircularProgress } from "@/components/circular-progress";
 import BottomSheet, {
   BottomSheetScrollView,
@@ -22,7 +22,7 @@ import { Streak } from "@/components/streak";
 import { BlurOverlay } from "@/components/blur-overlay";
 import { BlurView } from "expo-blur";
 import { useNavigation } from "@react-navigation/native";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import * as Haptics from "expo-haptics";
 import * as ImagePicker from "expo-image-picker";
 import { Image } from "expo-image";
@@ -31,8 +31,10 @@ import { decode } from "base64-arraybuffer";
 import { DateTime } from "luxon";
 import { useAuth } from "@/components/auth-context";
 import { MealSkeleton } from "@/components/meals-skeleton";
+import { GoalReached } from "@/components/goal-reached";
+import { usePhoto } from "@/components/photo-context";
 
-interface Meal {
+export interface Meal {
   name: string;
   protein: number;
   scanned: boolean;
@@ -52,12 +54,14 @@ export default function Index() {
   const [menuItemWidths, setMenuItemWidths] = useState<{
     [key: string]: number;
   }>({});
-  const [photo, setPhoto] = useState<ImagePicker.ImagePickerAsset | null>(null);
   const [meals, setMeals] = useState<Meal[]>([]);
   const [dailyGoal, setDailyGoal] = useState<number>(200);
   const [currentProtein, setCurrentProtein] = useState<number>(115);
   const progress = currentProtein / dailyGoal;
   const [isScanning, setIsScanning] = useState(false);
+  const [showGoalReached, setShowGoalReached] = useState(false);
+  const [hasShownGoalReached, setHasShownGoalReached] = useState(false);
+  const { photo: scannedPhoto } = usePhoto();
 
   useEffect(() => {
     const fetchDailyGoal = async () => {
@@ -73,24 +77,57 @@ export default function Index() {
 
   useEffect(() => {
     const fetchMeals = async () => {
+      // Get today's date at midnight in UTC
+      const today = DateTime.now().startOf("day").toISO();
+
       const { data, error } = await supabase
         .from("meals")
         .select("*")
         .eq("user_id", user?.id!)
+        .gte("created_at", today)
         .order("created_at", { ascending: false });
-      setMeals(
-        data?.map((meal) => {
-          return {
+
+      if (data) {
+        // Calculate total protein intake for today
+        const todaysTotalProtein = data.reduce(
+          (sum, meal) => sum + meal.protein_amount,
+          0
+        );
+        setCurrentProtein(todaysTotalProtein);
+
+        // Set meals data
+        setMeals(
+          data.map((meal) => ({
             name: meal.name,
             protein: meal.protein_amount,
             scanned: true,
             created_at: meal.created_at || "",
-          };
-        }) || []
-      );
+          }))
+        );
+      }
     };
     fetchMeals();
   }, [user?.id]);
+
+  useEffect(() => {
+    if (currentProtein >= dailyGoal && !hasShownGoalReached) {
+      setShowGoalReached(true);
+      setHasShownGoalReached(true);
+    }
+  }, [currentProtein, dailyGoal]);
+
+  useEffect(() => {
+    if (scannedPhoto) {
+      console.log("uploading photo", scannedPhoto.uri);
+      handleUpload({
+        uri: scannedPhoto.uri,
+        fileName: `photo.${scannedPhoto.uri?.split(".")[1]}`,
+        width: scannedPhoto.width,
+        height: scannedPhoto.height,
+        base64: scannedPhoto.base64,
+      });
+    }
+  }, [scannedPhoto]);
 
   const handleBadgePress = useCallback(async () => {
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -139,7 +176,6 @@ export default function Index() {
 
     if (!result.canceled) {
       // Navigate to upload screen with the selected image
-      setPhoto(result.assets[0]);
       await handleUpload(result.assets[0]);
     }
   };
@@ -155,13 +191,14 @@ export default function Index() {
       ...prev,
     ]);
     try {
+      if (!photo?.base64) return;
       const { data, error } = await supabase.storage
         .from("temp")
         .upload(
           `${user?.id}/${DateTime.now().toISO()}.${
             photo?.fileName?.split(".")[1]
           }`,
-          decode(photo?.base64 || ""),
+          decode(photo?.base64),
           {
             contentType: `${photo?.mimeType}`,
           }
@@ -184,7 +221,7 @@ export default function Index() {
 
       // Remove the loading skeleton and update with actual data
       setMeals((prev) => {
-        const filteredMeals = prev.filter((meal) => meal.scanned); // Remove the loading skeleton
+        const filteredMeals = prev.filter((meal) => meal.scanned);
         return [
           {
             name: scanData.meal_name,
@@ -194,11 +231,28 @@ export default function Index() {
           ...filteredMeals,
         ];
       });
+
+      // Update current protein intake
+      setCurrentProtein((prev) => prev + scanData.protein_g);
     } catch (error) {
       console.error(error);
     } finally {
       setIsScanning(false);
     }
+  };
+
+  const handleManualPress = () => {
+    router.push({
+      pathname: "/(app)/(tabs)/home/manual",
+      // params: {
+      //   setMeals: setMeals,
+      //   setCurrentProtein: setCurrentProtein,
+      // },
+    });
+  };
+
+  const handleCameraPress = () => {
+    router.push("/home/camera");
   };
 
   const renderFloatingButton = () => (
@@ -249,10 +303,7 @@ export default function Index() {
         >
           <Pressable
             style={getMenuItemStyle("manual") as ViewStyle}
-            onPress={() => {
-              toggleMenu();
-              router.push("/(app)/(tabs)/home/manual" as any);
-            }}
+            onPress={handleManualPress}
           >
             <Text
               style={styles.menuItemText}
@@ -281,10 +332,7 @@ export default function Index() {
 
           <Pressable
             style={getMenuItemStyle("camera") as ViewStyle}
-            onPress={() => {
-              toggleMenu();
-              router.push("/home/camera");
-            }}
+            onPress={handleCameraPress}
           >
             <Text
               style={styles.menuItemText}
@@ -402,6 +450,10 @@ export default function Index() {
           />
         </BottomSheetView>
       </BottomSheet>
+
+      {showGoalReached && (
+        <GoalReached onClose={() => setShowGoalReached(false)} />
+      )}
     </SafeAreaView>
   );
 }
