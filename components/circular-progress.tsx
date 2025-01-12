@@ -16,7 +16,7 @@ export const CircularProgress = ({
   progress,
   size = 48,
   strokeWidth = 4,
-  color = "#4CAF50",
+  color = "#7FEA71",
   backgroundColor = "#E0E0E0",
   children,
 }: CircularProgressProps) => {

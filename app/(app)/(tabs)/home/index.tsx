@@ -17,7 +17,7 @@ import BottomSheet, {
   BottomSheetScrollView,
   BottomSheetView,
 } from "@gorhom/bottom-sheet";
-import { useCallback, useRef, useMemo, useState } from "react";
+import { useCallback, useRef, useMemo, useState, useEffect } from "react";
 import { Streak } from "@/components/streak";
 import { BlurOverlay } from "@/components/blur-overlay";
 import { BlurView } from "expo-blur";
@@ -30,10 +30,13 @@ import supabase from "@/lib/supabase";
 import { decode } from "base64-arraybuffer";
 import { DateTime } from "luxon";
 import { useAuth } from "@/components/auth-context";
+import { MealSkeleton } from "@/components/meals-skeleton";
 
 interface Meal {
   name: string;
   protein: number;
+  scanned: boolean;
+  // created_at: string;
 }
 
 export default function Index() {
@@ -50,16 +53,44 @@ export default function Index() {
     [key: string]: number;
   }>({});
   const [photo, setPhoto] = useState<ImagePicker.ImagePickerAsset | null>(null);
-
-  const dailyGoal = 200;
-  const currentProtein = 115;
+  const [meals, setMeals] = useState<Meal[]>([]);
+  const [dailyGoal, setDailyGoal] = useState<number>(200);
+  const [currentProtein, setCurrentProtein] = useState<number>(115);
   const progress = currentProtein / dailyGoal;
+  const [isScanning, setIsScanning] = useState(false);
 
-  const meals: Meal[] = [
-    { name: "Teriyaki Beef Bowl", protein: 61 },
-    { name: "Protein Bar", protein: 18 },
-    { name: "Scrambled Eggs", protein: 36 },
-  ];
+  useEffect(() => {
+    const fetchDailyGoal = async () => {
+      const { data, error } = await supabase
+        .from("users")
+        .select("*")
+        .eq("id", user?.id!);
+      setDailyGoal(data?.[0]?.daily_protein_target || 200);
+      // setCurrentProtein(data?.[0]?. || 115);
+    };
+    fetchDailyGoal();
+  }, [user?.id]);
+
+  useEffect(() => {
+    const fetchMeals = async () => {
+      const { data, error } = await supabase
+        .from("meals")
+        .select("*")
+        .eq("user_id", user?.id!)
+        .order("created_at", { ascending: false });
+      setMeals(
+        data?.map((meal) => {
+          return {
+            name: meal.name,
+            protein: meal.protein_amount,
+            scanned: true,
+            created_at: meal.created_at || "",
+          };
+        }) || []
+      );
+    };
+    fetchMeals();
+  }, [user?.id]);
 
   const handleBadgePress = useCallback(async () => {
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -114,6 +145,15 @@ export default function Index() {
   };
 
   const handleUpload = async (photo: ImagePicker.ImagePickerAsset) => {
+    setIsScanning(true);
+    setMeals((prev) => [
+      {
+        name: "",
+        protein: 0,
+        scanned: false,
+      },
+      ...prev,
+    ]);
     try {
       const { data, error } = await supabase.storage
         .from("temp")
@@ -142,9 +182,22 @@ export default function Index() {
         return;
       }
 
-      console.log("scanData", scanData);
+      // Remove the loading skeleton and update with actual data
+      setMeals((prev) => {
+        const filteredMeals = prev.filter((meal) => meal.scanned); // Remove the loading skeleton
+        return [
+          {
+            name: scanData.meal_name,
+            protein: scanData.protein_g,
+            scanned: true,
+          },
+          ...filteredMeals,
+        ];
+      });
     } catch (error) {
       console.error(error);
+    } finally {
+      setIsScanning(false);
     }
   };
 
@@ -256,11 +309,11 @@ export default function Index() {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* <Image
+      <Image
         source={require("@/assets/images/background.png")}
         style={styles.background}
         contentFit="cover"
-      /> */}
+      />
       <ScrollView
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}
@@ -278,7 +331,7 @@ export default function Index() {
         <FontAwesome6
           name="bolt"
           size={16}
-          color="#4CAF50"
+          color="#7FEA71"
           style={styles.lightningIcon}
         />
 
@@ -287,7 +340,7 @@ export default function Index() {
             progress={progress}
             size={200}
             strokeWidth={8}
-            color="#4CAF50"
+            color="#7FEA71"
             backgroundColor="#E0E0E0"
           >
             <View style={styles.progressContent}>
@@ -300,12 +353,19 @@ export default function Index() {
 
         <Text style={styles.sectionTitle}>Meals</Text>
         <View style={styles.mealsList}>
-          {meals.map((meal, index) => (
-            <View key={index} style={styles.mealItem}>
-              <Text style={styles.mealName}>{meal.name}</Text>
-              <Text style={styles.mealProtein}>({meal.protein}g)</Text>
-            </View>
-          ))}
+          {meals.map((meal, index) => {
+            if (isScanning && !meal.scanned) {
+              return <MealSkeleton key={index} />;
+            }
+            return (
+              <View key={index} style={styles.mealItem}>
+                <Text style={styles.mealName}>
+                  {meal.name.charAt(0).toUpperCase() + meal.name.slice(1)}
+                </Text>
+                <Text style={styles.mealProtein}>({meal.protein}g)</Text>
+              </View>
+            );
+          })}
         </View>
 
         <Text style={styles.sectionTitle}>This Week</Text>
@@ -349,7 +409,7 @@ export default function Index() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#FCE9BC",
+    // backgroundColor: "#FCE9BC",
   },
   scrollView: {
     flex: 1,
