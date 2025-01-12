@@ -41,6 +41,11 @@ export interface Meal {
   // created_at: string;
 }
 
+interface Streak {
+  streak: number;
+  emoji: string;
+}
+
 export default function Index() {
   const { user } = useAuth();
   const [isBottomSheetVisible, setIsBottomSheetVisible] = useState(false);
@@ -62,6 +67,21 @@ export default function Index() {
   const [showGoalReached, setShowGoalReached] = useState(false);
   const [hasShownGoalReached, setHasShownGoalReached] = useState(false);
   const { photo: scannedPhoto } = usePhoto();
+  const [streak, setStreak] = useState<Streak>({ streak: 0, emoji: "" });
+
+  useEffect(() => {
+    const fetchStreak = async () => {
+      const { data, error } = await supabase
+        .from("streaks")
+        .select("*, streak_level(*)")
+        .eq("user_id", user?.id!);
+      setStreak({
+        streak: data?.[0]?.current_streak || 0,
+        emoji: data?.[0]?.streak_level?.emoji || "",
+      });
+    };
+    fetchStreak();
+  }, [user?.id]);
 
   useEffect(() => {
     const fetchDailyGoal = async () => {
@@ -370,7 +390,7 @@ export default function Index() {
           <Text style={styles.title}>Protein AI</Text>
           <Pressable onPress={handleBadgePress}>
             <View style={styles.badge}>
-              <Text style={styles.badgeNumber}>1 🌱</Text>
+              <Text style={styles.badgeNumber}>{streak} 🌱</Text>
             </View>
           </Pressable>
         </View>

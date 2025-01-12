@@ -41,6 +41,71 @@ export type Database = {
           },
         ]
       }
+      streak_levels: {
+        Row: {
+          created_at: string | null
+          emoji: string
+          id: number
+          name: string
+          threshold: number
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          emoji: string
+          id?: number
+          name: string
+          threshold: number
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          emoji?: string
+          id?: number
+          name?: string
+          threshold?: number
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      streaks: {
+        Row: {
+          created_at: string | null
+          current_streak: number
+          id: number
+          max_streak: number
+          streak_level_id: number
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          current_streak?: number
+          id?: number
+          max_streak?: number
+          streak_level_id: number
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          current_streak?: number
+          id?: number
+          max_streak?: number
+          streak_level_id?: number
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "streaks_streak_level_id_fkey"
+            columns: ["streak_level_id"]
+            isOneToOne: false
+            referencedRelation: "streak_levels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       users: {
         Row: {
           created_at: string | null
