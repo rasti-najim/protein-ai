@@ -157,9 +157,31 @@ export type Database = {
         }
         Relationships: []
       }
+      weekly_meals_view: {
+        Row: {
+          daily_breakdown: Json[] | null
+          days_logged: number | null
+          total_protein: number | null
+          user_id: string | null
+          week_end: string | null
+          week_start: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meals_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
-      [_ in never]: never
+      update_streaks: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
     }
     Enums: {
       exercise_frequency_type: "0-2" | "3-4" | "5+"

@@ -14,6 +14,7 @@ import { BarChart } from "react-native-gifted-charts";
 import { useEffect, useState } from "react";
 import supabase from "@/lib/supabase";
 import { useAuth } from "@/components/auth-context";
+import { DateTime } from "luxon";
 
 interface BarData {
   value: number;
@@ -27,7 +28,7 @@ export default function Progress() {
   const router = useRouter();
   const weeklyGoal = 154;
   const [barData, setBarData] = useState<BarData[]>([]);
-
+  const [history, setHistory] = useState([]);
   if (!user) {
     return <Redirect href="/onboarding" />;
   }
@@ -48,11 +49,8 @@ export default function Progress() {
       if (weeklyMeals) {
         setBarData(
           weeklyMeals.map((week) => ({
-            value: week.total_protein,
-            label: new Date(week.week_start).toLocaleDateString("en-US", {
-              month: "short",
-              day: "numeric",
-            }),
+            value: week.total_protein || 0,
+            label: week.week_start || "",
             frontColor: "#A8D1FF",
             labelTextStyle: styles.chartLabel,
           }))
@@ -61,6 +59,24 @@ export default function Progress() {
     };
     fetchWeeklyMeals();
   }, [user?.id]);
+
+  useEffect(() => {
+    const fetchHistory = async () => {
+      try {
+        const { data: history, error } = await supabase
+          .from("meals")
+          .select("*")
+          .eq("user_id", user?.id)
+          .order("created_at", { ascending: false });
+
+        if (error) throw error;
+        setHistory(history as any);
+      } catch (error) {
+        console.error("Error fetching history:", error);
+      }
+    };
+    fetchHistory();
+  }, []);
 
   // const barData = [
   //   {
@@ -107,15 +123,6 @@ export default function Progress() {
   //   },
   // ];
 
-  const historyDates = [
-    "Tuesday 1/7/25",
-    "Monday 1/6/25",
-    "Sunday 1/5/25",
-    "Saturday 1/4/25",
-    "Friday 1/3/25",
-    "Thursday 1/2/25",
-  ];
-
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.scrollView}>
@@ -152,13 +159,15 @@ export default function Progress() {
         <Text style={styles.sectionTitle}>History</Text>
 
         <View style={styles.historyList}>
-          {historyDates.map((date, index) => (
+          {history.map((meal: any, index) => (
             <TouchableOpacity
               key={index}
               style={styles.historyItem}
               // onPress={() => router.push(`/history/${date}`)}
             >
-              <Text style={styles.historyDate}>{date}</Text>
+              <Text style={styles.historyDate}>
+                {DateTime.fromISO(meal.created_at).toFormat("EEE, MMM d")}
+              </Text>
               <MaterialCommunityIcons
                 name="chevron-right"
                 size={32}
