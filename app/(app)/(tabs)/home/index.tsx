@@ -248,7 +248,10 @@ export default function Index() {
 
       const { data: scanData, error: scanError } =
         await supabase.functions.invoke("scan-photo", {
-          body: { imagePath: data.path, createdAt: DateTime.now().toISO() },
+          body: {
+            imagePath: data.path,
+            createdAt: DateTime.now().toUTC().toISO(),
+          },
         });
 
       if (scanError) {
