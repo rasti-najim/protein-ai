@@ -27,7 +27,7 @@ interface MealsByDate {
   [date: string]: {
     created_at: string;
     name: string;
-    protein: number;
+    protein_amount: number;
   }[];
 }
 
@@ -199,20 +199,37 @@ export default function Progress() {
         <Text style={styles.sectionTitle}>History</Text>
 
         <View style={styles.historyList}>
-          {Object.entries(groupedHistory).map(([date, meals]) => (
-            <View key={date} style={styles.dateGroup}>
-              <Text style={styles.historyDate}>
-                {DateTime.fromISO(date).toFormat("M/d/yy")}
-              </Text>
-              {meals.map((meal, index) => (
-                <View key={index} style={styles.mealItem}>
-                  <Text style={styles.mealText}>
-                    {meal.name} ({meal.protein}g)
-                  </Text>
-                </View>
-              ))}
-            </View>
-          ))}
+          {Object.entries(groupedHistory).map(([date, meals]) => {
+            const mealDate = DateTime.fromISO(date);
+            const now = DateTime.now();
+            const diff = now
+              .startOf("day")
+              .diff(mealDate.startOf("day"), "days").days;
+
+            let displayDate;
+            if (diff === 0) {
+              displayDate = "Today";
+            } else if (diff === 1) {
+              displayDate = "Yesterday";
+            } else if (diff < 7) {
+              displayDate = mealDate.toFormat("cccc"); // Full day name
+            } else {
+              displayDate = mealDate.toFormat("cccc, MMM d"); // Day name, Month Day
+            }
+
+            return (
+              <View key={date} style={styles.dateGroup}>
+                <Text style={styles.historyDate}>{displayDate}</Text>
+                {meals.map((meal, index) => (
+                  <View key={index} style={styles.mealItem}>
+                    <Text style={styles.mealText}>
+                      {meal.name} ({meal.protein_amount}g)
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            );
+          })}
         </View>
       </ScrollView>
     </SafeAreaView>
