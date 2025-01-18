@@ -4,6 +4,7 @@ import { FontAwesome6 } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import supabase from "@/lib/supabase";
 import * as Haptics from "expo-haptics";
+import { Image } from "expo-image";
 
 export default function Settings() {
   const router = useRouter();
@@ -17,6 +18,11 @@ export default function Settings() {
     {
       title: "Account",
       route: "/settings/account",
+      icon: "chevron-right",
+    },
+    {
+      title: "Subscription",
+      route: "/settings/subscription",
       icon: "chevron-right",
     },
   ];
@@ -33,6 +39,12 @@ export default function Settings() {
 
   return (
     <SafeAreaView style={styles.container}>
+      <Image
+        source={require("@/assets/images/background.png")}
+        style={styles.background}
+        contentFit="cover"
+      />
+
       <Text style={styles.title}>Settings</Text>
 
       <View style={styles.menuContainer}>
@@ -48,9 +60,9 @@ export default function Settings() {
         ))}
       </View>
 
-      <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+      {/* <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
         <Text style={styles.logoutText}>Log Out</Text>
-      </TouchableOpacity>
+      </TouchableOpacity> */}
     </SafeAreaView>
   );
 }
@@ -60,6 +72,10 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#FCE9BC",
     padding: 20,
+  },
+  background: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: -1,
   },
   title: {
     fontSize: 42,

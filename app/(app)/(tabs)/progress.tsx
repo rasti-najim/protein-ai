@@ -15,6 +15,7 @@ import { useEffect, useState } from "react";
 import supabase from "@/lib/supabase";
 import { useAuth } from "@/components/auth-context";
 import { DateTime } from "luxon";
+import { Image } from "expo-image";
 
 interface BarData {
   value: number;
@@ -23,14 +24,22 @@ interface BarData {
   labelTextStyle: StyleProp<TextStyle>;
 }
 
+interface MealsByDate {
+  [date: string]: {
+    created_at: string;
+    name: string;
+    protein: number;
+  }[];
+}
+
 export default function Progress() {
   const { user } = useAuth();
   const router = useRouter();
   const weeklyGoal = 154;
   const [barData, setBarData] = useState<BarData[]>([]);
-  const [history, setHistory] = useState([]);
+  const [groupedHistory, setGroupedHistory] = useState<MealsByDate>({});
   if (!user) {
-    return <Redirect href="/onboarding" />;
+    return <Redirect href="/welcome" />;
   }
 
   useEffect(() => {
@@ -70,7 +79,18 @@ export default function Progress() {
           .order("created_at", { ascending: false });
 
         if (error) throw error;
-        setHistory(history as any);
+
+        // Group meals by date
+        const grouped = (history as any[]).reduce((acc: MealsByDate, meal) => {
+          const date = DateTime.fromISO(meal.created_at).toFormat("yyyy-MM-dd");
+          if (!acc[date]) {
+            acc[date] = [];
+          }
+          acc[date].push(meal);
+          return acc;
+        }, {});
+
+        setGroupedHistory(grouped);
       } catch (error) {
         console.error("Error fetching history:", error);
       }
@@ -125,6 +145,11 @@ export default function Progress() {
 
   return (
     <SafeAreaView style={styles.container}>
+      <Image
+        source={require("@/assets/images/background.png")}
+        style={styles.background}
+        contentFit="cover"
+      />
       <ScrollView style={styles.scrollView}>
         <Text style={styles.title}>Progress</Text>
 
@@ -159,21 +184,19 @@ export default function Progress() {
         <Text style={styles.sectionTitle}>History</Text>
 
         <View style={styles.historyList}>
-          {history.map((meal: any, index) => (
-            <TouchableOpacity
-              key={index}
-              style={styles.historyItem}
-              // onPress={() => router.push(`/history/${date}`)}
-            >
+          {Object.entries(groupedHistory).map(([date, meals]) => (
+            <View key={date} style={styles.dateGroup}>
               <Text style={styles.historyDate}>
-                {DateTime.fromISO(meal.created_at).toFormat("EEE, MMM d")}
+                {DateTime.fromISO(date).toFormat("M/d/yy")}
               </Text>
-              <MaterialCommunityIcons
-                name="chevron-right"
-                size={32}
-                color="#2A2A2A"
-              />
-            </TouchableOpacity>
+              {meals.map((meal, index) => (
+                <View key={index} style={styles.mealItem}>
+                  <Text style={styles.mealText}>
+                    {meal.name} ({meal.protein}g)
+                  </Text>
+                </View>
+              ))}
+            </View>
           ))}
         </View>
       </ScrollView>
@@ -189,6 +212,10 @@ const styles = StyleSheet.create({
   scrollView: {
     flex: 1,
     padding: 20,
+  },
+  background: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: -1,
   },
   title: {
     fontSize: 42,
@@ -248,18 +275,23 @@ const styles = StyleSheet.create({
     color: "#666666",
   },
   historyList: {
-    gap: 16,
+    gap: 32,
   },
-  historyItem: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: "rgba(42, 42, 42, 0.1)",
+  dateGroup: {
+    gap: 8,
   },
   historyDate: {
     fontSize: 32,
+    fontFamily: "Platypi",
+    color: "#2A2A2A",
+  },
+  mealItem: {
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "rgba(42, 42, 42, 0.1)",
+  },
+  mealText: {
+    fontSize: 24,
     fontFamily: "Platypi",
     color: "#2A2A2A",
   },

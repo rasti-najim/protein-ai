@@ -15,6 +15,7 @@ import {
 import { BlurView } from "expo-blur";
 import { CircularProgress } from "./circular-progress";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { FontAwesome6 } from "@expo/vector-icons";
 
 interface OnboardingLayoutProps {
   children: React.ReactNode;
@@ -61,6 +62,10 @@ export const OnboardingLayout = ({
           <View
             style={[styles.modalView, { paddingBottom: safeAreaInsets.bottom }]}
           >
+            <TouchableOpacity style={styles.backButton} onPress={onBack}>
+              <FontAwesome6 name="chevron-left" size={24} color="#2A2A2A" />
+            </TouchableOpacity>
+
             {children}
 
             {!hideBottomBar && (
@@ -79,21 +84,21 @@ export const OnboardingLayout = ({
                       color="#4CAF50"
                     />
                   </CircularProgress>
-                </View>
 
-                <TouchableOpacity
-                  style={[
-                    styles.continueButton,
-                    isNextDisabled && styles.buttonDisabled,
-                    hideBottomBar && { width: "100%" },
-                  ]}
-                  onPress={onNext}
-                  disabled={isNextDisabled}
-                >
-                  <Text style={styles.continueButtonText}>
-                    {hideBottomBar ? "Finish" : nextButtonText}
-                  </Text>
-                </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[
+                      styles.continueButton,
+                      isNextDisabled && styles.buttonDisabled,
+                      hideBottomBar && { width: "100%" },
+                    ]}
+                    onPress={onNext}
+                    disabled={isNextDisabled}
+                  >
+                    <Text style={styles.continueButtonText}>
+                      {hideBottomBar ? "Finish" : nextButtonText}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
               </View>
             )}
           </View>
@@ -123,6 +128,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#FCE9BC",
     borderRadius: 40,
     padding: 24,
+    paddingTop: 72,
     shadowColor: "#000",
     shadowOffset: {
       width: 0,
@@ -147,12 +153,14 @@ const styles = StyleSheet.create({
   bottomBar: {
     marginTop: "auto",
     width: "100%",
-    paddingHorizontal: 24,
+    paddingTop: 16,
   },
   bottomContent: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
+    width: "100%",
+    paddingHorizontal: 16,
   },
   continueButton: {
     backgroundColor: "#333333",
@@ -169,5 +177,17 @@ const styles = StyleSheet.create({
   },
   buttonDisabled: {
     opacity: 0.5,
+  },
+  backButton: {
+    position: "absolute",
+    top: 16,
+    left: 16,
+    zIndex: 1,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    justifyContent: "center",
+    alignItems: "center",
   },
 });

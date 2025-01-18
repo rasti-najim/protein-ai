@@ -77,6 +77,8 @@ export default function Onboarding() {
   const handleBack = () => {
     if (currentStep > 0) {
       setCurrentStep(currentStep - 1);
+    } else {
+      router.push("/welcome");
     }
   };
 

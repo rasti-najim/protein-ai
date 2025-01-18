@@ -26,7 +26,7 @@ export const DailyProteinGoal = ({
 }: DailyProteinGoalProps) => {
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0.8)).current;
-  const numberAnim = useRef(new Animated.Value(0)).current;
+  const progressAnim = useRef(new Animated.Value(0)).current;
 
   const calculateProteinGoal = () => {
     let weightInPounds = targetWeight;
@@ -40,6 +40,7 @@ export const DailyProteinGoal = ({
 
   useEffect(() => {
     Animated.sequence([
+      // First animate the container fade and scale
       Animated.parallel([
         Animated.timing(fadeAnim, {
           toValue: 1,
@@ -53,8 +54,9 @@ export const DailyProteinGoal = ({
           useNativeDriver: true,
         }),
       ]),
-      Animated.timing(numberAnim, {
-        toValue: proteinGoal,
+      // Then animate the progress circle and number
+      Animated.timing(progressAnim, {
+        toValue: 1,
         duration: 1500,
         useNativeDriver: false,
       }),
@@ -62,6 +64,12 @@ export const DailyProteinGoal = ({
       onSelect(proteinGoal);
     });
   }, []);
+
+  // Create an interpolated value for the protein number
+  const proteinNumber = progressAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, proteinGoal],
+  });
 
   return (
     <View style={styles.container}>
@@ -79,7 +87,7 @@ export const DailyProteinGoal = ({
         ]}
       >
         <CircularProgress
-          progress={1}
+          progress={progressAnim}
           size={200}
           strokeWidth={8}
           color="#4CAF50"
@@ -87,7 +95,7 @@ export const DailyProteinGoal = ({
         >
           <View style={styles.goalContent}>
             <Animated.Text style={styles.goalNumber}>
-              {numberAnim.interpolate({
+              {proteinNumber.interpolate({
                 inputRange: [0, proteinGoal],
                 outputRange: ["0g", `${proteinGoal}g`],
               })}

@@ -1,6 +1,6 @@
 import React from "react";
-import { View, StyleSheet } from "react-native";
-import Svg, { Circle } from "react-native-svg";
+import { View, StyleSheet, Text } from "react-native";
+import Svg, { Circle, CircleProps } from "react-native-svg";
 import { Animated } from "react-native";
 
 interface CircularProgressProps {
@@ -10,6 +10,7 @@ interface CircularProgressProps {
   color: string;
   backgroundColor: string;
   children?: React.ReactNode;
+  goalText?: string;
 }
 
 export const CircularProgress = ({
@@ -19,41 +20,52 @@ export const CircularProgress = ({
   color = "#7FEA71",
   backgroundColor = "#E0E0E0",
   children,
+  goalText,
 }: CircularProgressProps) => {
   const radius = (size - strokeWidth) / 2;
   const circumference = radius * 2 * Math.PI;
+  const gapDegrees = 30; // Size of the gap in degrees
+  const arcLength = (360 - gapDegrees) / 360; // Proportion of the circle to draw
+
   const clampedProgress =
     typeof progress === "number" ? Math.min(1, progress) : progress;
   const progressOffset =
-    circumference - (clampedProgress as number) * circumference;
+    circumference - (clampedProgress as number) * circumference * arcLength;
+
+  const commonCircleProps: CircleProps = {
+    fill: "none",
+    cx: size / 2,
+    cy: size / 2,
+    r: radius,
+    strokeWidth: strokeWidth,
+    strokeLinecap: "round",
+    transform: `rotate(120 ${size / 2} ${size / 2})`,
+  };
 
   return (
     <View style={styles.container}>
       <Svg width={size} height={size}>
         <Circle
+          {...commonCircleProps}
           stroke={backgroundColor}
-          fill="none"
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
-          strokeWidth={strokeWidth}
+          strokeDasharray={`${circumference * arcLength} ${circumference}`}
+          strokeDashoffset={circumference * (1 - arcLength)}
         />
         <Circle
+          {...commonCircleProps}
           stroke={color}
-          fill="none"
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
-          strokeWidth={strokeWidth}
-          strokeDasharray={`${circumference} ${circumference}`}
+          strokeDasharray={`${circumference * arcLength} ${circumference}`}
           strokeDashoffset={progressOffset}
-          strokeLinecap="round"
-          transform={`rotate(-90 ${size / 2} ${size / 2})`}
         />
       </Svg>
       <View style={[styles.childrenContainer, { width: size, height: size }]}>
         {children}
       </View>
+      {goalText && (
+        <View style={[styles.goalTextContainer, { width: size }]}>
+          <Text style={styles.goalText}>{goalText}</Text>
+        </View>
+      )}
     </View>
   );
 };
@@ -68,5 +80,14 @@ const styles = StyleSheet.create({
     left: 0,
     alignItems: "center",
     justifyContent: "center",
+  },
+  goalTextContainer: {
+    position: "absolute",
+    bottom: "5%",
+    alignItems: "center",
+  },
+  goalText: {
+    fontSize: 20,
+    fontFamily: "Platypi",
   },
 });

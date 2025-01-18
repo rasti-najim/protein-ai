@@ -57,12 +57,16 @@ export default function CreateAccount({
       }
     } catch (error: any) {
       if (error.code === statusCodes.SIGN_IN_CANCELLED) {
+        console.log("user cancelled the login flow");
         // user cancelled the login flow
       } else if (error.code === statusCodes.IN_PROGRESS) {
+        console.log("operation (e.g. sign in) is in progress already");
         // operation (e.g. sign in) is in progress already
       } else if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
+        console.log("play services not available or outdated");
         // play services not available or outdated
       } else {
+        console.log("some other error happened");
         // some other error happened
       }
     }
@@ -72,10 +76,7 @@ export default function CreateAccount({
     try {
       await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       const credential = await AppleAuthentication.signInAsync({
-        requestedScopes: [
-          AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
-          AppleAuthentication.AppleAuthenticationScope.EMAIL,
-        ],
+        requestedScopes: [AppleAuthentication.AppleAuthenticationScope.EMAIL],
       });
       if (credential.identityToken) {
         const {
@@ -142,17 +143,20 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#FCE9BC",
+    paddingTop: 80,
   },
   title: {
     fontSize: 50,
     fontFamily: "Platypi",
     color: "#2A2A2A",
     marginBottom: 80,
+    paddingHorizontal: 24,
   },
   buttonContainer: {
     gap: 20,
     marginBottom: 24,
     alignItems: "center",
+    paddingHorizontal: 24,
   },
   authButton: {
     flexDirection: "row",

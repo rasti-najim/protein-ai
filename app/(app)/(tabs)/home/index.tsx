@@ -168,8 +168,8 @@ export default function Index() {
 
   const handleBadgePress = useCallback(async () => {
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    bottomSheetRef.current?.expand();
-    // router.push("/(app)/(tabs)/home/streak");
+    // bottomSheetRef.current?.expand();
+    router.push("/home/streak");
   }, []);
 
   const handleSheetChanges = useCallback((index: number) => {
@@ -199,7 +199,7 @@ export default function Index() {
   const getMenuItemStyle = (key: string) => ({
     ...styles.fabMenuItem,
     width: menuItemWidths[key] || "auto",
-    minWidth: Math.min(screenWidth * 0.4, 200), // Minimum width
+    minWidth: Math.min(screenWidth * 0.45, 220), // Increased minimum width
   });
 
   const handleImagePick = async () => {
@@ -417,13 +417,15 @@ export default function Index() {
           </Pressable>
         </View>
 
-        <Text style={styles.sectionTitle}>Today</Text>
-        <FontAwesome6
-          name="bolt"
-          size={16}
-          color="#7FEA71"
-          style={styles.lightningIcon}
-        />
+        <View style={styles.todayContainer}>
+          <Text style={styles.sectionTitle}>Today</Text>
+          <FontAwesome6
+            name="bolt"
+            size={16}
+            color="#7FEA71"
+            style={styles.lightningIcon}
+          />
+        </View>
 
         <View style={styles.progressContainer}>
           <CircularProgress
@@ -432,11 +434,11 @@ export default function Index() {
             strokeWidth={8}
             color="#7FEA71"
             backgroundColor="#E0E0E0"
+            goalText={`${dailyGoal}g`}
           >
             <View style={styles.progressContent}>
               <Text style={styles.progressNumber}>{currentProtein}g</Text>
               <Text style={styles.progressLabel}>protein</Text>
-              <Text style={styles.progressGoal}>{dailyGoal}g</Text>
             </View>
           </CircularProgress>
         </View>
@@ -516,6 +518,12 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
+    marginBottom: 8,
+  },
+  todayContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
     marginBottom: 8,
   },
   title: {
@@ -641,31 +649,33 @@ const styles = StyleSheet.create({
   },
   fabMenu: {
     position: "absolute",
-    bottom: 60,
+    bottom: 80, // Increased bottom spacing
     right: 0,
-    gap: 8,
+    gap: 12, // Increased gap between items
   },
   fabMenuItem: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "flex-end",
-    gap: 12,
+    gap: 16, // Increased gap between text and icon
     backgroundColor: "#FCE9BC",
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 16,
+    paddingVertical: 16, // Increased vertical padding
+    paddingHorizontal: 20, // Increased horizontal padding
+    borderRadius: 20, // Increased border radius
     width: "100%",
     shadowColor: "#000",
     shadowOffset: {
       width: 0,
-      height: 2,
+      height: 4, // Increased shadow offset
     },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
+    shadowOpacity: 0.2,
+    shadowRadius: 6, // Increased shadow radius
+    elevation: 8, // Increased elevation for Android
+    borderWidth: 2, // Added border
+    borderColor: "#2A2A2A", // Added border color
   },
   menuItemText: {
-    fontSize: 20,
+    fontSize: 22, // Increased font size
     fontFamily: "Platypi",
     color: "#2A2A2A",
   },
