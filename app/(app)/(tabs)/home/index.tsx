@@ -169,7 +169,10 @@ export default function Index() {
   const handleBadgePress = useCallback(async () => {
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     // bottomSheetRef.current?.expand();
-    router.push("/home/streak");
+    router.push({
+      pathname: "/home/streak",
+      params: { streak: JSON.stringify(streak) },
+    });
   }, []);
 
   const handleSheetChanges = useCallback((index: number) => {

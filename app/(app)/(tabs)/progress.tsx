@@ -21,7 +21,6 @@ interface BarData {
   value: number;
   label: string;
   frontColor: string;
-  labelTextStyle: StyleProp<TextStyle>;
 }
 
 interface MealsByDate {
@@ -35,9 +34,9 @@ interface MealsByDate {
 export default function Progress() {
   const { user } = useAuth();
   const router = useRouter();
-  const weeklyGoal = 154;
   const [barData, setBarData] = useState<BarData[]>([]);
   const [groupedHistory, setGroupedHistory] = useState<MealsByDate>({});
+  const [goal, setGoal] = useState(0);
   if (!user) {
     return <Redirect href="/welcome" />;
   }
@@ -48,7 +47,7 @@ export default function Progress() {
         .from("weekly_meals_view")
         .select("*")
         .eq("user_id", user.id)
-        .limit(7); // Get last 7 weeks
+        .limit(7);
 
       if (error) {
         console.error("Error fetching weekly meals:", error);
@@ -57,10 +56,13 @@ export default function Progress() {
 
       if (weeklyMeals) {
         setBarData(
-          weeklyMeals.map((week) => ({
+          weeklyMeals.map((week, index) => ({
             value: week.total_protein || 0,
-            label: week.week_start || "",
-            frontColor: "#A8D1FF",
+            label: DateTime.fromISO(week.week_start || "")
+              .toFormat("ccc")
+              .charAt(0),
+            frontColor:
+              index === 1 ? "#4A90E2" : index === 2 ? "#FF6B6B" : "#A8D1FF",
             labelTextStyle: styles.chartLabel,
           }))
         );
@@ -96,6 +98,22 @@ export default function Progress() {
       }
     };
     fetchHistory();
+  }, []);
+
+  useEffect(() => {
+    const fetchGoal = async () => {
+      const { data: userData, error } = await supabase
+        .from("users")
+        .select("*")
+        .eq("id", user?.id)
+        .limit(1)
+        .single();
+
+      if (error) throw error;
+
+      setGoal(userData.daily_protein_target);
+    };
+    fetchGoal();
   }, []);
 
   // const barData = [
@@ -158,20 +176,17 @@ export default function Progress() {
         <View style={styles.chartContainer}>
           <View style={styles.goalLine}>
             <View style={styles.goalDash} />
-            <Text style={styles.goalText}>{weeklyGoal}g</Text>
+            <Text style={styles.goalText}>{goal}g</Text>
           </View>
 
           <BarChart
             data={barData}
-            barWidth={24}
-            spacing={16}
-            roundedTop
-            roundedBottom
-            // hideRules
-            xAxisThickness={1}
-            xAxisColor="rgba(42, 42, 42, 0.1)"
+            barWidth={22}
+            // spacing={16}
+            barBorderRadius={4}
+            xAxisThickness={0}
             yAxisThickness={0}
-            maxValue={200}
+            // maxValue={200}
             noOfSections={4}
             renderTooltip={(item: any) => (
               <View style={styles.proteinBadge}>
