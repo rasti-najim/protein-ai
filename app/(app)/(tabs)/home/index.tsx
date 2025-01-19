@@ -47,6 +47,7 @@ interface StreakData {
   max_streak: number;
   streak_name: string;
   streak_emoji: string;
+  days_to_next_level: number;
 }
 
 export default function Index() {
@@ -75,6 +76,7 @@ export default function Index() {
     max_streak: 0,
     streak_name: "",
     streak_emoji: "",
+    days_to_next_level: 0,
   });
 
   const checkIfWeShouldResetGoalMessage = async () => {
@@ -101,24 +103,26 @@ export default function Index() {
     checkIfWeShouldResetGoalMessage();
   }, []);
 
+  const fetchStreak = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("user_streak_view")
+        .select("*")
+        .eq("user_id", user?.id!);
+      setStreak({
+        current_streak: data?.[0]?.current_streak || 0,
+        max_streak: data?.[0]?.max_streak || 0,
+        streak_name: data?.[0]?.streak_name || "",
+        streak_emoji: data?.[0]?.streak_emoji || "",
+        days_to_next_level: data?.[0]?.days_to_next_level || 0,
+      });
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   useFocusEffect(
     useCallback(() => {
-      const fetchStreak = async () => {
-        try {
-          const { data, error } = await supabase
-            .from("user_streak_view")
-            .select("*")
-            .eq("user_id", user?.id!);
-          setStreak({
-            current_streak: data?.[0]?.current_streak || 0,
-            max_streak: data?.[0]?.max_streak || 0,
-            streak_name: data?.[0]?.streak_name || "",
-            streak_emoji: data?.[0]?.streak_emoji || "",
-          });
-        } catch (error) {
-          console.error(error);
-        }
-      };
       fetchStreak();
     }, [])
   );
@@ -186,10 +190,8 @@ export default function Index() {
         setShowGoalReached(true);
         await AsyncStorage.setItem("hasShownGoalReached", "true");
         await AsyncStorage.setItem("goalMessageDate", today);
-        setStreak((prev) => ({
-          ...prev,
-          current_streak: prev.current_streak + 1,
-        }));
+        // Fetch updated streak data
+        await fetchStreak();
       }
     };
     checkGoalReached();
@@ -210,12 +212,13 @@ export default function Index() {
 
   const handleBadgePress = useCallback(async () => {
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    // bottomSheetRef.current?.expand();
     router.push({
       pathname: "/home/streak",
-      params: { streak: JSON.stringify(streak) },
+      params: {
+        streak: JSON.stringify(streak),
+      },
     });
-  }, []);
+  }, [streak]);
 
   const handleSheetChanges = useCallback((index: number) => {
     if (index === -1) {

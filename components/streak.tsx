@@ -1,14 +1,19 @@
 import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { FontAwesome5 } from "@expo/vector-icons";
+import { Button } from "@/components/button";
 
 interface StreakProps {
+  name: string;
+  emoji: string;
   currentStreak: number;
   daysToNextLevel: number;
   onClose: () => void;
 }
 
 export const Streak = ({
+  name,
+  emoji,
   currentStreak,
   daysToNextLevel,
   onClose,
@@ -16,23 +21,23 @@ export const Streak = ({
   return (
     <View style={styles.container}>
       <View style={styles.content}>
-        <Text style={styles.title}>Starter</Text>
+        <Text style={styles.title}>{name}</Text>
 
         <View style={styles.iconContainer}>
-          <FontAwesome5 name="seedling" size={64} color="#4CAF50" />
+          <Text style={styles.emoji}>{emoji}</Text>
         </View>
 
         <Text style={styles.streakText}>
-          You have hit your protein goal for {currentStreak} consecutive day
+          You have hit your {name} goal for {currentStreak} consecutive days
         </Text>
 
         <Text style={styles.nextLevelText}>
           Stay consistent for {daysToNextLevel} more days to level up!
         </Text>
 
-        <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+        <Button style={styles.closeButton} onPress={onClose}>
           <Text style={styles.closeButtonText}>Close</Text>
-        </TouchableOpacity>
+        </Button>
       </View>
     </View>
   );
@@ -91,5 +96,9 @@ const styles = StyleSheet.create({
     color: "#333333",
     textAlign: "center",
     fontWeight: "600",
+  },
+  emoji: {
+    fontSize: 64,
+    color: "#4CAF50",
   },
 });
