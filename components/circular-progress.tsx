@@ -28,9 +28,14 @@ export const CircularProgress = ({
   const arcLength = (360 - gapDegrees) / 360; // Proportion of the circle to draw
 
   const clampedProgress =
-    typeof progress === "number" ? Math.min(1, progress) : progress;
+    typeof progress === "number"
+      ? Math.min(1, Math.max(0, progress))
+      : progress;
+
   const progressOffset =
-    circumference - (clampedProgress as number) * circumference * arcLength;
+    typeof clampedProgress === "number" && clampedProgress === 0
+      ? circumference
+      : circumference - (clampedProgress as number) * circumference * arcLength;
 
   const commonCircleProps: CircleProps = {
     fill: "none",

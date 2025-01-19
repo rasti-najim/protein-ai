@@ -22,7 +22,7 @@ import { Streak } from "@/components/streak";
 import { BlurOverlay } from "@/components/blur-overlay";
 import { BlurView } from "expo-blur";
 import { useNavigation } from "@react-navigation/native";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import * as Haptics from "expo-haptics";
 import * as ImagePicker from "expo-image-picker";
 import { Image } from "expo-image";
@@ -101,71 +101,77 @@ export default function Index() {
     checkIfWeShouldResetGoalMessage();
   }, []);
 
-  useEffect(() => {
-    const fetchStreak = async () => {
-      try {
+  useFocusEffect(
+    useCallback(() => {
+      const fetchStreak = async () => {
+        try {
+          const { data, error } = await supabase
+            .from("user_streak_view")
+            .select("*")
+            .eq("user_id", user?.id!);
+          setStreak({
+            current_streak: data?.[0]?.current_streak || 0,
+            max_streak: data?.[0]?.max_streak || 0,
+            streak_name: data?.[0]?.streak_name || "",
+            streak_emoji: data?.[0]?.streak_emoji || "",
+          });
+        } catch (error) {
+          console.error(error);
+        }
+      };
+      fetchStreak();
+    }, [])
+  );
+
+  useFocusEffect(
+    useCallback(() => {
+      const fetchDailyGoal = async () => {
         const { data, error } = await supabase
-          .from("user_streak_view")
+          .from("users")
           .select("*")
-          .eq("user_id", user?.id!);
-        setStreak({
-          current_streak: data?.[0]?.current_streak || 0,
-          max_streak: data?.[0]?.max_streak || 0,
-          streak_name: data?.[0]?.streak_name || "",
-          streak_emoji: data?.[0]?.streak_emoji || "",
-        });
-      } catch (error) {
-        console.error(error);
-      }
-    };
-    fetchStreak();
-  }, [user?.id]);
+          .eq("id", user?.id!);
+        setDailyGoal(data?.[0]?.daily_protein_target || 200);
+        // setCurrentProtein(data?.[0]?. || 115);
+      };
+      fetchDailyGoal();
+    }, [])
+  );
 
-  useEffect(() => {
-    const fetchDailyGoal = async () => {
-      const { data, error } = await supabase
-        .from("users")
-        .select("*")
-        .eq("id", user?.id!);
-      setDailyGoal(data?.[0]?.daily_protein_target || 200);
-      // setCurrentProtein(data?.[0]?. || 115);
-    };
-    fetchDailyGoal();
-  }, [user?.id]);
+  useFocusEffect(
+    useCallback(() => {
+      const fetchMeals = async () => {
+        // Get today's date at midnight in UTC
+        const today = DateTime.now().startOf("day").toISO();
 
-  useEffect(() => {
-    const fetchMeals = async () => {
-      // Get today's date at midnight in UTC
-      const today = DateTime.now().startOf("day").toISO();
+        const { data, error } = await supabase
+          .from("meals")
+          .select("*")
+          .eq("user_id", user?.id!)
+          .gte("created_at", today)
+          .order("created_at", { ascending: false });
 
-      const { data, error } = await supabase
-        .from("meals")
-        .select("*")
-        .eq("user_id", user?.id!)
-        .gte("created_at", today)
-        .order("created_at", { ascending: false });
+        if (data) {
+          // Calculate total protein intake for today
+          const todaysTotalProtein = data.reduce(
+            (sum, meal) => sum + meal.protein_amount,
+            0
+          );
+          setCurrentProtein(todaysTotalProtein);
 
-      if (data) {
-        // Calculate total protein intake for today
-        const todaysTotalProtein = data.reduce(
-          (sum, meal) => sum + meal.protein_amount,
-          0
-        );
-        setCurrentProtein(todaysTotalProtein);
-
-        // Set meals data
-        setMeals(
-          data.map((meal) => ({
-            name: meal.name,
-            protein: meal.protein_amount,
-            scanned: true,
-            created_at: meal.created_at || "",
-          }))
-        );
-      }
-    };
-    fetchMeals();
-  }, [user?.id]);
+          // Set meals data
+          setMeals(
+            data.map((meal) => ({
+              name: meal.name,
+              protein: meal.protein_amount,
+              scanned: true,
+              created_at: meal.created_at || "",
+            }))
+          );
+        }
+      };
+      fetchMeals();
+    }, [])
+  );
 
   useEffect(() => {
     const checkGoalReached = async () => {
@@ -353,13 +359,7 @@ export default function Index() {
           <BlurView
             intensity={10}
             tint="dark"
-            style={{
-              position: "absolute",
-              top: -100, // Extend beyond screen bounds
-              left: 0,
-              right: 0,
-              bottom: -100, // Extend beyond screen bounds
-            }}
+            style={StyleSheet.absoluteFillObject}
           />
         </Animated.View>
       )}
@@ -373,63 +373,84 @@ export default function Index() {
                 {
                   translateY: menuAnimation.interpolate({
                     inputRange: [0, 1],
-                    outputRange: [0, -20],
+                    outputRange: [20, 0],
+                  }),
+                },
+                {
+                  scale: menuAnimation.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [0.8, 1],
                   }),
                 },
               ],
             },
           ]}
         >
-          <Pressable
-            style={getMenuItemStyle("manual") as ViewStyle}
-            onPress={handleManualPress}
-          >
-            <Text
-              style={styles.menuItemText}
-              onLayout={(e) => onTextLayout(e, "manual")}
+          {[
+            {
+              text: "Enter Manually",
+              icon: "pencil",
+              onPress: handleManualPress,
+            },
+            {
+              text: "Upload Photo",
+              icon: "image",
+              onPress: async () => {
+                toggleMenu();
+                await handleImagePick();
+              },
+            },
+            { text: "Take Photo", icon: "camera", onPress: handleCameraPress },
+          ].map((item, index) => (
+            <Animated.View
+              key={item.text}
+              style={{
+                transform: [
+                  {
+                    translateX: menuAnimation.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [100, 0],
+                    }),
+                  },
+                ],
+                opacity: menuAnimation,
+              }}
             >
-              Enter Manually
-            </Text>
-            <FontAwesome6 name="pencil" size={24} color="#2A2A2A" />
-          </Pressable>
-
-          <Pressable
-            style={getMenuItemStyle("upload") as ViewStyle}
-            onPress={async () => {
-              toggleMenu();
-              await handleImagePick();
-            }}
-          >
-            <Text
-              style={styles.menuItemText}
-              onLayout={(e) => onTextLayout(e, "upload")}
-            >
-              Upload Photo
-            </Text>
-            <FontAwesome6 name="image" size={24} color="#2A2A2A" />
-          </Pressable>
-
-          <Pressable
-            style={getMenuItemStyle("camera") as ViewStyle}
-            onPress={handleCameraPress}
-          >
-            <Text
-              style={styles.menuItemText}
-              onLayout={(e) => onTextLayout(e, "camera")}
-            >
-              Take Photo
-            </Text>
-            <FontAwesome6 name="camera" size={24} color="#2A2A2A" />
-          </Pressable>
+              <Pressable
+                style={[
+                  styles.fabMenuItem,
+                  {
+                    marginBottom: index === 2 ? 0 : 12,
+                  },
+                ]}
+                onPress={item.onPress}
+              >
+                <Text style={styles.menuItemText}>{item.text}</Text>
+                <FontAwesome6 name={item.icon} size={24} color="#2A2A2A" />
+              </Pressable>
+            </Animated.View>
+          ))}
         </Animated.View>
 
-        <Pressable style={styles.fab} onPress={toggleMenu}>
-          <FontAwesome6
-            name={isFabExpanded ? "minus" : "plus"}
-            size={32}
-            color="#FCE9BC"
-          />
-        </Pressable>
+        <Animated.View
+          style={[
+            styles.fab,
+            {
+              transform: [
+                {
+                  rotate: menuAnimation.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: ["0deg", "45deg"],
+                  }),
+                },
+              ],
+            },
+          ]}
+        >
+          <Pressable onPress={toggleMenu} style={styles.fabButton}>
+            <FontAwesome6 name="plus" size={32} color="#FCE9BC" />
+          </Pressable>
+        </Animated.View>
       </View>
     </>
   );
@@ -534,9 +555,14 @@ export default function Index() {
         </BottomSheetView>
       </BottomSheet>
 
-      {showGoalReached && (
-        <GoalReached onClose={() => setShowGoalReached(false)} />
-      )}
+      {/* {showGoalReached && (
+        <GoalReached
+          onClose={() => {
+            setShowGoalReached(false);
+            setHasShownGoalReached(true);
+          }}
+        />
+      )} */}
     </SafeAreaView>
   );
 }
@@ -656,65 +682,56 @@ const styles = StyleSheet.create({
   fabContainer: {
     position: "absolute",
     right: 20,
-    bottom: 10,
-    alignItems: "center",
+    bottom: 20,
+    alignItems: "flex-end",
   },
-  fabBackground: {
-    position: "absolute",
-    right: 0,
-    bottom: 0,
-    width: 84,
-    height: 84,
-    borderRadius: 42,
-    backgroundColor: "rgba(0, 0, 0, 0.1)",
-    transform: [{ scale: 1.1 }],
+  fabMenu: {
+    marginBottom: 16,
+    alignItems: "flex-end",
   },
   fab: {
     backgroundColor: "#333333",
     width: 64,
     height: 64,
     borderRadius: 32,
-    justifyContent: "center",
-    alignItems: "center",
     shadowColor: "#000",
     shadowOffset: {
       width: 0,
-      height: 2,
+      height: 4,
     },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
-    zIndex: 1,
+    shadowOpacity: 0.3,
+    shadowRadius: 4.65,
+    elevation: 8,
   },
-  fabMenu: {
-    position: "absolute",
-    bottom: 80, // Increased bottom spacing
-    right: 0,
-    gap: 12, // Increased gap between items
+  fabButton: {
+    width: "100%",
+    height: "100%",
+    justifyContent: "center",
+    alignItems: "center",
   },
   fabMenuItem: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "flex-end",
-    gap: 16, // Increased gap between text and icon
+    gap: 16,
     backgroundColor: "#FCE9BC",
-    paddingVertical: 16, // Increased vertical padding
-    paddingHorizontal: 20, // Increased horizontal padding
-    borderRadius: 20, // Increased border radius
-    width: "100%",
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    borderRadius: 16,
+    minWidth: 200,
     shadowColor: "#000",
     shadowOffset: {
       width: 0,
-      height: 4, // Increased shadow offset
+      height: 2,
     },
-    shadowOpacity: 0.2,
-    shadowRadius: 6, // Increased shadow radius
-    elevation: 8, // Increased elevation for Android
-    borderWidth: 2, // Added border
-    borderColor: "#2A2A2A", // Added border color
+    shadowOpacity: 0.15,
+    shadowRadius: 3.84,
+    elevation: 5,
+    borderWidth: 2,
+    borderColor: "#2A2A2A",
   },
   menuItemText: {
-    fontSize: 22, // Increased font size
+    fontSize: 20,
     fontFamily: "Platypi",
     color: "#2A2A2A",
   },
