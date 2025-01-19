@@ -3,12 +3,12 @@ import {
   View,
   StyleSheet,
   ScrollView,
+  Dimensions,
   TouchableOpacity,
   StyleProp,
   TextStyle,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { Redirect, useRouter } from "expo-router";
 import { BarChart } from "react-native-gifted-charts";
 import { useEffect, useState } from "react";
@@ -31,45 +31,27 @@ interface MealsByDate {
   }[];
 }
 
+const screenWidth = Dimensions.get("window").width;
+
 export default function Progress() {
   const { user } = useAuth();
   const router = useRouter();
   const [barData, setBarData] = useState<BarData[]>([]);
   const [groupedHistory, setGroupedHistory] = useState<MealsByDate>({});
   const [goal, setGoal] = useState(0);
+  const [selectedWeekStart, setSelectedWeekStart] = useState<string>(
+    DateTime.now().startOf("week").toISO()
+  );
+  const [isFirstWeek, setIsFirstWeek] = useState(false);
   if (!user) {
     return <Redirect href="/welcome" />;
   }
 
   useEffect(() => {
-    const fetchWeeklyMeals = async () => {
-      const { data: weeklyMeals, error } = await supabase
-        .from("weekly_meals_view")
-        .select("*")
-        .eq("user_id", user.id)
-        .limit(7);
-
-      if (error) {
-        console.error("Error fetching weekly meals:", error);
-        return;
-      }
-
-      if (weeklyMeals) {
-        setBarData(
-          weeklyMeals.map((week, index) => ({
-            value: week.total_protein || 0,
-            label: DateTime.fromISO(week.week_start || "")
-              .toFormat("ccc")
-              .charAt(0),
-            frontColor:
-              index === 1 ? "#4A90E2" : index === 2 ? "#FF6B6B" : "#A8D1FF",
-            labelTextStyle: styles.chartLabel,
-          }))
-        );
-      }
-    };
-    fetchWeeklyMeals();
-  }, [user?.id]);
+    if (user) {
+      fetchWeeklyMeals();
+    }
+  }, [user, selectedWeekStart]);
 
   useEffect(() => {
     const fetchHistory = async () => {
@@ -116,50 +98,63 @@ export default function Progress() {
     fetchGoal();
   }, []);
 
-  // const barData = [
-  //   {
-  //     value: 125,
-  //     label: "S",
-  //     frontColor: "#A8D1FF",
-  //     labelTextStyle: styles.chartLabel,
-  //   },
-  //   {
-  //     value: 163,
-  //     label: "M",
-  //     frontColor: "#4A90E2",
-  //     labelTextStyle: styles.chartLabel,
-  //   },
-  //   {
-  //     value: 73,
-  //     label: "T",
-  //     frontColor: "#FF6B6B",
-  //     labelTextStyle: styles.chartLabel,
-  //   },
-  //   {
-  //     value: 125,
-  //     label: "W",
-  //     frontColor: "#A8D1FF",
-  //     labelTextStyle: styles.chartLabel,
-  //   },
-  //   {
-  //     value: 125,
-  //     label: "T",
-  //     frontColor: "#A8D1FF",
-  //     labelTextStyle: styles.chartLabel,
-  //   },
-  //   {
-  //     value: 125,
-  //     label: "F",
-  //     frontColor: "#A8D1FF",
-  //     labelTextStyle: styles.chartLabel,
-  //   },
-  //   {
-  //     value: 125,
-  //     label: "S",
-  //     frontColor: "#A8D1FF",
-  //     labelTextStyle: styles.chartLabel,
-  //   },
-  // ];
+  const fetchWeeklyMeals = async () => {
+    // Get the earliest meal date
+    const { data: firstMeal } = await supabase
+      .from("meals")
+      .select("created_at")
+      .eq("user_id", user.id)
+      .order("created_at")
+      .limit(1)
+      .single();
+
+    if (firstMeal) {
+      const firstWeekStart = DateTime.fromISO(firstMeal.created_at).startOf(
+        "week"
+      );
+      const currentWeekStart = DateTime.fromISO(selectedWeekStart);
+      setIsFirstWeek(currentWeekStart <= firstWeekStart);
+    }
+
+    const weekStart = DateTime.fromISO(selectedWeekStart);
+    const weekEnd = weekStart.plus({ days: 6 });
+
+    const { data: meals, error } = await supabase
+      .from("meals")
+      .select("*")
+      .eq("user_id", user.id)
+      .gte("created_at", weekStart.toISO())
+      .lt("created_at", weekEnd.plus({ days: 1 }).toISO())
+      .order("created_at");
+
+    if (error) {
+      console.error("Error fetching weekly meals:", error);
+      return;
+    }
+
+    if (meals) {
+      // Group meals by day and calculate daily totals
+      const dailyTotals = meals.reduce(
+        (acc: { [key: string]: number }, meal) => {
+          const day = DateTime.fromISO(meal.created_at).toFormat("ccc");
+          acc[day] = (acc[day] || 0) + meal.protein_amount;
+          return acc;
+        },
+        {}
+      );
+
+      // Create bar data for each day of the week
+      const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+      setBarData(
+        days.map((day) => ({
+          value: dailyTotals[day] || 0,
+          label: day,
+          frontColor: (dailyTotals[day] || 0) >= goal ? "#7FEA71" : "#4A90E2",
+          // labelTextStyle: styles.chartLabel,
+        }))
+      );
+    }
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -173,23 +168,73 @@ export default function Progress() {
 
         <Text style={styles.sectionTitle}>This Week</Text>
 
+        <View style={styles.weekSelector}>
+          <TouchableOpacity
+            onPress={() => {
+              if (!isFirstWeek) {
+                const prevWeek = DateTime.fromISO(selectedWeekStart)
+                  .minus({ weeks: 1 })
+                  .toISO();
+                setSelectedWeekStart(prevWeek);
+              }
+            }}
+            style={[
+              styles.weekButton,
+              isFirstWeek && styles.weekButtonDisabled,
+            ]}
+            disabled={isFirstWeek}
+          >
+            <Text
+              style={[
+                styles.weekButtonText,
+                isFirstWeek && styles.weekButtonTextDisabled,
+              ]}
+            >
+              ←
+            </Text>
+          </TouchableOpacity>
+
+          <Text style={styles.weekLabel}>
+            {DateTime.fromISO(selectedWeekStart).toFormat("MMM d")} -{" "}
+            {DateTime.fromISO(selectedWeekStart)
+              .plus({ days: 6 })
+              .toFormat("MMM d")}
+          </Text>
+
+          <TouchableOpacity
+            onPress={() => {
+              const nextWeek = DateTime.fromISO(selectedWeekStart)
+                .plus({ weeks: 1 })
+                .toISO();
+              const now = DateTime.now();
+              if (DateTime.fromISO(nextWeek) <= now) {
+                setSelectedWeekStart(nextWeek);
+              }
+            }}
+            style={styles.weekButton}
+          >
+            <Text style={styles.weekButtonText}>→</Text>
+          </TouchableOpacity>
+        </View>
+
         <View style={styles.chartContainer}>
-          <View style={styles.goalLine}>
+          {/* <View style={styles.goalLine}>
             <View style={styles.goalDash} />
             <Text style={styles.goalText}>{goal}g</Text>
-          </View>
+          </View> */}
 
           <BarChart
             data={barData}
             barWidth={22}
-            // spacing={16}
+            spacing={16}
             barBorderRadius={4}
             xAxisThickness={0}
             yAxisThickness={0}
-            // maxValue={200}
             noOfSections={4}
+            maxValue={Math.ceil((goal * 2.5) / 10) * 10}
+            width={screenWidth - 40}
             renderTooltip={(item: any) => (
-              <View style={styles.proteinBadge}>
+              <View style={[styles.proteinBadge, { zIndex: 2 }]}>
                 <Text style={styles.proteinText}>{item.value}g</Text>
               </View>
             )}
@@ -326,5 +371,34 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontFamily: "Platypi",
     color: "#2A2A2A",
+  },
+  weekIndicator: {
+    marginBottom: 8,
+  },
+  weekLabel: {
+    fontSize: 16,
+    fontFamily: "Platypi",
+    color: "#666666",
+  },
+  weekSelector: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 16,
+    paddingHorizontal: 8,
+  },
+  weekButton: {
+    padding: 8,
+  },
+  weekButtonText: {
+    fontSize: 24,
+    fontFamily: "Platypi",
+    color: "#2A2A2A",
+  },
+  weekButtonDisabled: {
+    opacity: 0.3,
+  },
+  weekButtonTextDisabled: {
+    color: "#666666",
   },
 });

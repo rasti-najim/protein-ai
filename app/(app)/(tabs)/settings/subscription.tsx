@@ -4,7 +4,7 @@ import { Image } from "expo-image";
 import { FontAwesome6 } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { useRouter } from "expo-router";
-
+import { Button } from "@/components/button";
 export default function Subscription() {
   const router = useRouter();
 
@@ -33,12 +33,9 @@ export default function Subscription() {
           </Text>
         </View>
 
-        <TouchableOpacity
-          style={styles.manageButton}
-          onPress={handleManageSubscription}
-        >
+        <Button style={styles.manageButton} onPress={handleManageSubscription}>
           <Text style={styles.manageButtonText}>Manage Subscription</Text>
-        </TouchableOpacity>
+        </Button>
       </View>
     </SafeAreaView>
   );
