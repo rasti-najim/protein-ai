@@ -6,6 +6,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ScanFrame } from "@/components/scan-frame";
 import { useRouter } from "expo-router";
 import { usePhoto } from "@/components/photo-context";
+import { Button } from "@/components/button";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function Page() {
   const insets = useSafeAreaInsets();
@@ -55,11 +57,11 @@ export default function Page() {
     <View style={styles.container}>
       <CameraView
         ref={cameraRef}
-        style={styles.camera}
+        style={StyleSheet.absoluteFill}
         facing="back"
         flash={flash ? "on" : "off"}
       >
-        <View style={[styles.overlay, { paddingTop: insets.top }]}>
+        <SafeAreaView style={styles.overlay}>
           <TouchableOpacity
             style={styles.closeButton}
             onPress={() => router.back()}
@@ -67,13 +69,15 @@ export default function Page() {
             <MaterialCommunityIcons name="close" size={32} color="#FCE9BC" />
           </TouchableOpacity>
 
-          <Text style={styles.title}>Scan Meal or Barcode</Text>
+          <Text style={styles.title}>Scan Meal</Text>
 
           <View style={styles.scanFrame}>
             <ScanFrame />
           </View>
 
-          <View style={styles.buttonContainer}>
+          <View
+            style={[styles.buttonContainer, { paddingBottom: insets.bottom }]}
+          >
             <TouchableOpacity
               style={styles.flashButton}
               onPress={() => setFlash(!flash)}
@@ -94,7 +98,7 @@ export default function Page() {
 
             <View style={styles.buttonSpacer} />
           </View>
-        </View>
+        </SafeAreaView>
       </CameraView>
     </View>
   );
@@ -103,27 +107,25 @@ export default function Page() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  camera: {
-    flex: 1,
+    backgroundColor: "#000",
   },
   overlay: {
     flex: 1,
+    backgroundColor: "transparent",
     padding: 20,
-    alignItems: "center",
   },
   title: {
     fontSize: 42,
     fontFamily: "Platypi",
     color: "#FCE9BC",
-    marginBottom: 40,
     textAlign: "center",
+    marginBottom: 40,
   },
   scanFrame: {
-    width: "100%",
-    aspectRatio: 1,
+    flex: 1,
     justifyContent: "center",
     alignItems: "center",
+    marginVertical: 40,
   },
   frameImage: {
     width: "100%",
@@ -165,13 +167,12 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   buttonContainer: {
-    position: "absolute",
-    bottom: 40,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     width: "100%",
     paddingHorizontal: 40,
+    marginBottom: 20,
   },
   flashButton: {
     width: 48,

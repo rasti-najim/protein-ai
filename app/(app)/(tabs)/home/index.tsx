@@ -34,6 +34,7 @@ import { MealSkeleton } from "@/components/meals-skeleton";
 import { GoalReached } from "@/components/goal-reached";
 import { usePhoto } from "@/components/photo-context";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Button } from "@/components/button";
 
 export interface Meal {
   name: string;
@@ -419,7 +420,7 @@ export default function Index() {
                 opacity: menuAnimation,
               }}
             >
-              <Pressable
+              <Button
                 style={[
                   styles.fabMenuItem,
                   {
@@ -430,7 +431,7 @@ export default function Index() {
               >
                 <Text style={styles.menuItemText}>{item.text}</Text>
                 <FontAwesome6 name={item.icon} size={24} color="#2A2A2A" />
-              </Pressable>
+              </Button>
             </Animated.View>
           ))}
         </Animated.View>

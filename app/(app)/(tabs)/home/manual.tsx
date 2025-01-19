@@ -15,6 +15,7 @@ import { Redirect, useRouter } from "expo-router";
 import supabase from "@/lib/supabase";
 import { useAuth } from "@/components/auth-context";
 import { DateTime } from "luxon";
+import { Button } from "@/components/button";
 export default function Manual() {
   const { user } = useAuth();
   const [mealName, setMealName] = useState("");
@@ -74,13 +75,13 @@ export default function Manual() {
           </View>
 
           <View style={styles.buttonContainer}>
-            <TouchableOpacity
+            <Button
               style={[styles.button, !isValid && styles.buttonDisabled]}
               onPress={handleSave}
               disabled={!isValid}
             >
               <Text style={styles.buttonText}>Save</Text>
-            </TouchableOpacity>
+            </Button>
           </View>
         </KeyboardAvoidingView>
       </SafeAreaView>
