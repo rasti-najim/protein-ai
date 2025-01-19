@@ -7,15 +7,17 @@ import {
   TouchableOpacity,
   StyleProp,
   TextStyle,
+  FlatList,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Redirect, useRouter } from "expo-router";
 import { BarChart } from "react-native-gifted-charts";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import supabase from "@/lib/supabase";
 import { useAuth } from "@/components/auth-context";
 import { DateTime } from "luxon";
 import { Image } from "expo-image";
+import { MealHistory } from "@/components/meal-history";
 
 interface BarData {
   value: number;
@@ -54,13 +56,14 @@ export default function Progress() {
   }, [user, selectedWeekStart]);
 
   useEffect(() => {
-    const fetchHistory = async () => {
+    const fetchHistory = async (page = 1, limit = 20) => {
       try {
         const { data: history, error } = await supabase
           .from("meals")
           .select("*")
           .eq("user_id", user?.id)
-          .order("created_at", { ascending: false });
+          .order("created_at", { ascending: false })
+          .range((page - 1) * limit, page * limit - 1);
 
         if (error) throw error;
 
@@ -243,39 +246,7 @@ export default function Progress() {
 
         <Text style={styles.sectionTitle}>History</Text>
 
-        <View style={styles.historyList}>
-          {Object.entries(groupedHistory).map(([date, meals]) => {
-            const mealDate = DateTime.fromISO(date);
-            const now = DateTime.now();
-            const diff = now
-              .startOf("day")
-              .diff(mealDate.startOf("day"), "days").days;
-
-            let displayDate;
-            if (diff === 0) {
-              displayDate = "Today";
-            } else if (diff === 1) {
-              displayDate = "Yesterday";
-            } else if (diff < 7) {
-              displayDate = mealDate.toFormat("cccc"); // Full day name
-            } else {
-              displayDate = mealDate.toFormat("cccc, MMM d"); // Day name, Month Day
-            }
-
-            return (
-              <View key={date} style={styles.dateGroup}>
-                <Text style={styles.historyDate}>{displayDate}</Text>
-                {meals.map((meal, index) => (
-                  <View key={index} style={styles.mealItem}>
-                    <Text style={styles.mealText}>
-                      {meal.name} ({meal.protein_amount}g)
-                    </Text>
-                  </View>
-                ))}
-              </View>
-            );
-          })}
-        </View>
+        <MealHistory userId={user.id} />
       </ScrollView>
     </SafeAreaView>
   );
