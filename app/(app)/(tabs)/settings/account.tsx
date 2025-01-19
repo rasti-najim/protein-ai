@@ -4,6 +4,7 @@ import { useAuth } from "@/components/auth-context";
 import * as Haptics from "expo-haptics";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
+import { Button } from "@/components/button";
 
 export default function Account() {
   const { signOut, deleteAccount } = useAuth();
@@ -40,16 +41,13 @@ export default function Account() {
       <Text style={styles.title}>Account</Text>
 
       <View style={styles.buttonContainer}>
-        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+        <Button style={styles.logoutButton} onPress={handleLogout}>
           <Text style={styles.logoutText}>Log Out</Text>
-        </TouchableOpacity>
+        </Button>
 
-        <TouchableOpacity
-          style={styles.deleteButton}
-          onPress={handleDeleteAccount}
-        >
+        <Button style={styles.deleteButton} onPress={handleDeleteAccount}>
           <Text style={styles.deleteText}>Delete Account</Text>
-        </TouchableOpacity>
+        </Button>
       </View>
     </SafeAreaView>
   );

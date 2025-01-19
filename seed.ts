@@ -6,7 +6,7 @@ const main = async () => {
   // Truncate all tables in the database
   await seed.$resetDatabase(["!public.streak_levels"]);
 
-  const userId = "cffe0d90-281b-498f-8528-731c624851b8"
+  const userId = "f759fce0-7d6a-4736-8819-ae65b39a87cc";
 
   // Helper function to generate a random protein amount within a range
   const randomProtein = (min: number, max: number) => 

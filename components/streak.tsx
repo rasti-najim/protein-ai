@@ -21,19 +21,33 @@ export const Streak = ({
   return (
     <View style={styles.container}>
       <View style={styles.content}>
-        <Text style={styles.title}>{name}</Text>
-
-        <View style={styles.iconContainer}>
-          <Text style={styles.emoji}>{emoji}</Text>
-        </View>
-
-        <Text style={styles.streakText}>
-          You have hit your {name} goal for {currentStreak} consecutive days
-        </Text>
-
-        <Text style={styles.nextLevelText}>
-          Stay consistent for {daysToNextLevel} more days to level up!
-        </Text>
+        {currentStreak === 0 ? (
+          <>
+            <Text style={styles.title}>Start Your Streak!</Text>
+            <View style={styles.iconContainer}>
+              <Text style={styles.emoji}>💪</Text>
+            </View>
+            <Text style={styles.streakText}>
+              Hit your daily protein goal to start building your streak
+            </Text>
+            <Text style={styles.nextLevelText}>
+              Stay consistent to unlock new achievements
+            </Text>
+          </>
+        ) : (
+          <>
+            <Text style={styles.title}>{name}</Text>
+            <View style={styles.iconContainer}>
+              <Text style={styles.emoji}>{emoji}</Text>
+            </View>
+            <Text style={styles.streakText}>
+              You have hit your {name} goal for {currentStreak} consecutive days
+            </Text>
+            <Text style={styles.nextLevelText}>
+              Stay consistent for {daysToNextLevel} more days to level up!
+            </Text>
+          </>
+        )}
 
         <Button style={styles.closeButton} onPress={onClose}>
           <Text style={styles.closeButtonText}>Close</Text>
