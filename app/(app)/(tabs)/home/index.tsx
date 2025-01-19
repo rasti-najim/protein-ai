@@ -33,6 +33,7 @@ import { useAuth } from "@/components/auth-context";
 import { MealSkeleton } from "@/components/meals-skeleton";
 import { GoalReached } from "@/components/goal-reached";
 import { usePhoto } from "@/components/photo-context";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export interface Meal {
   name: string;
@@ -75,6 +76,30 @@ export default function Index() {
     streak_name: "",
     streak_emoji: "",
   });
+
+  const checkIfWeShouldResetGoalMessage = async () => {
+    try {
+      const storedDate = await AsyncStorage.getItem("goalMessageDate");
+      const today = DateTime.now().toFormat("yyyy-MM-dd");
+
+      if (!storedDate || storedDate !== today) {
+        // If there's no stored date or it's a different day, reset
+        setShowGoalReached(false);
+        await AsyncStorage.setItem("goalMessageDate", today);
+        await AsyncStorage.setItem("hasShownGoalReached", "false");
+      } else {
+        // Same day, so retrieve whether message was shown
+        const seenMsg = await AsyncStorage.getItem("hasShownGoalReached");
+        setShowGoalReached(seenMsg === "true");
+      }
+    } catch (e) {
+      console.error("Failed to check or reset goal message status", e);
+    }
+  };
+
+  useEffect(() => {
+    checkIfWeShouldResetGoalMessage();
+  }, []);
 
   useEffect(() => {
     const fetchStreak = async () => {
@@ -143,14 +168,25 @@ export default function Index() {
   }, [user?.id]);
 
   useEffect(() => {
-    if (currentProtein >= dailyGoal && !hasShownGoalReached) {
-      setShowGoalReached(true);
-      setHasShownGoalReached(true);
-      setStreak((prev) => ({
-        ...prev,
-        current_streak: prev.current_streak + 1,
-      }));
-    }
+    const checkGoalReached = async () => {
+      const seenMsg = await AsyncStorage.getItem("hasShownGoalReached");
+      const today = DateTime.now().toFormat("yyyy-MM-dd");
+      const storedDate = await AsyncStorage.getItem("goalMessageDate");
+
+      if (
+        currentProtein >= dailyGoal &&
+        (seenMsg !== "true" || storedDate !== today)
+      ) {
+        setShowGoalReached(true);
+        await AsyncStorage.setItem("hasShownGoalReached", "true");
+        await AsyncStorage.setItem("goalMessageDate", today);
+        setStreak((prev) => ({
+          ...prev,
+          current_streak: prev.current_streak + 1,
+        }));
+      }
+    };
+    checkGoalReached();
   }, [currentProtein, dailyGoal]);
 
   useEffect(() => {
