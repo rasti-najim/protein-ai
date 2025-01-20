@@ -10,6 +10,7 @@ import { router } from "expo-router";
 import CreateAccount from "../components/create-account";
 import { OnboardingLoading } from "@/components/onboarding-loading";
 import { Goal } from "@/components/goal";
+import Superwall from "@superwall/react-native-superwall";
 
 export interface OnboardingData {
   gender: "male" | "female" | "other" | null;
@@ -67,6 +68,14 @@ export default function Onboarding() {
   const handleNext = async () => {
     if (currentStep < totalSteps - 1) {
       await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Soft);
+
+      // if (currentStep === 5) {
+      //   Superwall.shared.register("onboarding").then((result) => {
+      //     setCurrentStep(currentStep + 1);
+      //     return;
+      //   });
+      // }
+
       setCurrentStep(currentStep + 1);
     } else {
       console.log("saving onboarding data: ", data);

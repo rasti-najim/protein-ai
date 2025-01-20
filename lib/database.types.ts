@@ -68,33 +68,6 @@ export type Database = {
         }
         Relationships: []
       }
-      streaks: {
-        Row: {
-          created_at: string | null
-          current_streak: number
-          id: number
-          max_streak: number
-          updated_at: string | null
-          user_id: string
-        }
-        Insert: {
-          created_at?: string | null
-          current_streak?: number
-          id?: number
-          max_streak?: number
-          updated_at?: string | null
-          user_id: string
-        }
-        Update: {
-          created_at?: string | null
-          current_streak?: number
-          id?: number
-          max_streak?: number
-          updated_at?: string | null
-          user_id?: string
-        }
-        Relationships: []
-      }
       users: {
         Row: {
           created_at: string | null
@@ -136,26 +109,21 @@ export type Database = {
       user_streak_view: {
         Row: {
           current_streak: number | null
+          days_to_next_level: number | null
           max_streak: number | null
           streak_emoji: string | null
           streak_name: string | null
           user_id: string | null
         }
-        Insert: {
-          current_streak?: number | null
-          max_streak?: number | null
-          streak_emoji?: never
-          streak_name?: never
-          user_id?: string | null
-        }
-        Update: {
-          current_streak?: number | null
-          max_streak?: number | null
-          streak_emoji?: never
-          streak_name?: never
-          user_id?: string | null
-        }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "meals_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       weekly_meals_view: {
         Row: {

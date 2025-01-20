@@ -36,6 +36,7 @@ import { GoalReached } from "@/components/goal-reached";
 import { usePhoto } from "@/components/photo-context";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Button } from "@/components/button";
+import Superwall from "@superwall/react-native-superwall";
 
 export interface Meal {
   name: string;
@@ -253,18 +254,20 @@ export default function Index() {
   });
 
   const handleImagePick = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ["images"],
-      allowsEditing: true,
-      aspect: [4, 3],
-      quality: 1,
-      base64: true,
-    });
+    Superwall.shared.register("upload_photo").then(async () => {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ["images"],
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 1,
+        base64: true,
+      });
 
-    if (!result.canceled) {
-      // Navigate to upload screen with the selected image
-      await handleUpload(result.assets[0]);
-    }
+      if (!result.canceled) {
+        // Navigate to upload screen with the selected image
+        await handleUpload(result.assets[0]);
+      }
+    });
   };
 
   const handleUpload = async (photo: ImagePicker.ImagePickerAsset) => {
@@ -277,6 +280,7 @@ export default function Index() {
         protein: 0,
         scanned: false,
         id: tempId, // Add temporary ID to identify this loading state
+        created_at: DateTime.now().toUTC().toISO(),
       },
       ...prev,
     ]);
@@ -331,6 +335,7 @@ export default function Index() {
           name: scanData.meal_name,
           protein: scanData.protein_g,
           scanned: true,
+          created_at: DateTime.now().toUTC().toISO(),
         },
         ...prev,
       ]);
@@ -347,17 +352,21 @@ export default function Index() {
   };
 
   const handleManualPress = () => {
-    router.push({
-      pathname: "/(app)/(tabs)/home/manual",
-      // params: {
-      //   setMeals: setMeals,
-      //   setCurrentProtein: setCurrentProtein,
-      // },
+    Superwall.shared.register("manual_entry").then(() => {
+      router.push({
+        pathname: "/(app)/(tabs)/home/manual",
+        // params: {
+        //   setMeals: setMeals,
+        //   setCurrentProtein: setCurrentProtein,
+        // },
+      });
     });
   };
 
   const handleCameraPress = () => {
-    router.push("/home/camera");
+    Superwall.shared.register("scan_entry").then(() => {
+      router.push("/home/camera");
+    });
   };
 
   const renderFloatingButton = () => (

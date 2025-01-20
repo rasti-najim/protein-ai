@@ -6,11 +6,11 @@ import { useEffect } from "react";
 export default function AppLayout() {
   const { session, loading } = useAuth();
 
-  // useEffect(() => {
-  //   Superwall.shared.getConfigurationStatus().then((status) => {
-  //     console.log("Superwall configuration status:", status);
-  //   });
-  // }, []);
+  useEffect(() => {
+    Superwall.shared.getSubscriptionStatus().then((status) => {
+      console.log("Superwall subscription status:", status);
+    });
+  }, []);
 
   if (loading) {
     return null;
