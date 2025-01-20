@@ -9,6 +9,7 @@ import {
   useWindowDimensions,
   LayoutChangeEvent,
   ViewStyle,
+  Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { FontAwesome6 } from "@expo/vector-icons";
@@ -268,14 +269,18 @@ export default function Index() {
 
   const handleUpload = async (photo: ImagePicker.ImagePickerAsset) => {
     setIsScanning(true);
+    // Add temporary loading state to meals
+    const tempId = DateTime.now().toMillis(); // Create unique ID for the loading state
     setMeals((prev) => [
       {
         name: "",
         protein: 0,
         scanned: false,
+        id: tempId, // Add temporary ID to identify this loading state
       },
       ...prev,
     ]);
+
     try {
       if (!photo?.base64) return;
       const { data, error } = await supabase.storage
@@ -308,23 +313,34 @@ export default function Index() {
         return;
       }
 
-      // Remove the loading skeleton and update with actual data
-      setMeals((prev) => {
-        const filteredMeals = prev.filter((meal) => meal.scanned);
-        return [
-          {
-            name: scanData.meal_name,
-            protein: scanData.protein_g,
-            scanned: true,
-          },
-          ...filteredMeals,
-        ];
-      });
+      // Remove the loading skeleton
+      setMeals((prev) => prev.filter((meal) => meal.id !== tempId));
+
+      // Check if the image is not a meal
+      if (scanData.not_a_meal) {
+        Alert.alert(
+          "Not a Meal",
+          "The image you uploaded doesn't appear to be a meal. Please try again with a different photo."
+        );
+        return;
+      }
+
+      // If it is a meal, update the UI with the meal data
+      setMeals((prev) => [
+        {
+          name: scanData.meal_name,
+          protein: scanData.protein_g,
+          scanned: true,
+        },
+        ...prev,
+      ]);
 
       // Update current protein intake
       setCurrentProtein((prev) => prev + scanData.protein_g);
     } catch (error) {
       console.error(error);
+      // Remove the loading skeleton in case of error
+      setMeals((prev) => prev.filter((meal) => meal.id !== tempId));
     } finally {
       setIsScanning(false);
     }
@@ -509,21 +525,29 @@ export default function Index() {
 
         <Text style={styles.sectionTitle}>Meals</Text>
         <View style={styles.mealsList}>
-          {meals.map((meal, index) => {
-            if (isScanning && !meal.scanned) {
-              return <MealSkeleton key={index} />;
-            }
-            return (
-              <View key={index} style={styles.mealItem}>
-                <Text style={styles.mealName}>
-                  {meal.name.charAt(0).toUpperCase() + meal.name.slice(1)}
-                </Text>
-                <Text style={styles.mealProtein}>({meal.protein}g)</Text>
-              </View>
-            );
-          })}
+          {meals.length === 0 ? (
+            <Text style={styles.placeholderText}>
+              No meals logged today. Tap + to add your first meal!
+            </Text>
+          ) : (
+            meals.map((meal, index) => {
+              if (isScanning && !meal.scanned) {
+                return <MealSkeleton key={index} />;
+              }
+              return (
+                <View key={index} style={styles.mealItem}>
+                  <Text style={styles.mealName}>
+                    {meal.name.charAt(0).toUpperCase() + meal.name.slice(1)}
+                  </Text>
+                  <Text style={styles.mealProtein}>({meal.protein}g)</Text>
+                </View>
+              );
+            })
+          )}
         </View>
       </ScrollView>
+
+      {renderFloatingButton()}
 
       {/* {showGoalReached && (
         <GoalReached
@@ -639,6 +663,8 @@ const styles = StyleSheet.create({
     fontFamily: "Platypi",
     color: "#666666",
     fontStyle: "italic",
+    textAlign: "center",
+    marginTop: 8,
   },
   contentContainer: {
     flex: 1,
