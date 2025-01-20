@@ -6,6 +6,7 @@ import { FlashList } from "@shopify/flash-list";
 
 interface MealsByDate {
   [date: string]: {
+    id: string;
     name: string;
     protein_amount: number;
     created_at: string;
@@ -94,7 +95,7 @@ export const MealHistory = ({ userId }: MealHistoryProps) => {
 
   useEffect(() => {
     loadMoreMeals();
-  }, [loadMoreMeals]);
+  }, []);
 
   return (
     <FlatList
@@ -102,7 +103,10 @@ export const MealHistory = ({ userId }: MealHistoryProps) => {
       initialNumToRender={10}
       maxToRenderPerBatch={10}
       renderItem={renderDateGroup}
-      keyExtractor={(date: string) => date}
+      keyExtractor={(date: string) => {
+        const meals = groupedMeals[date];
+        return meals?.[0]?.id || date;
+      }}
       onEndReached={loadMoreMeals}
       onEndReachedThreshold={0.5}
       style={styles.list}

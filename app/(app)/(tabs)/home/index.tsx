@@ -41,7 +41,7 @@ export interface Meal {
   name: string;
   protein: number;
   scanned: boolean;
-  // created_at: string;
+  created_at: string;
 }
 
 interface StreakData {
@@ -532,14 +532,27 @@ export default function Index() {
           ) : (
             meals.map((meal, index) => {
               if (isScanning && !meal.scanned) {
-                return <MealSkeleton key={index} />;
+                return <MealSkeleton key={index} showCalculating={true} />;
               }
               return (
                 <View key={index} style={styles.mealItem}>
-                  <Text style={styles.mealName}>
-                    {meal.name.charAt(0).toUpperCase() + meal.name.slice(1)}
-                  </Text>
-                  <Text style={styles.mealProtein}>({meal.protein}g)</Text>
+                  <View style={styles.mealInfo}>
+                    <Text
+                      style={styles.mealName}
+                      numberOfLines={1}
+                      ellipsizeMode="tail"
+                    >
+                      {meal.name.charAt(0).toUpperCase() + meal.name.slice(1)}
+                    </Text>
+                    <View style={styles.proteinBadge}>
+                      <Text style={styles.mealProtein}>{meal.protein}g</Text>
+                    </View>
+                  </View>
+                  {meal.created_at && (
+                    <Text style={styles.mealTime}>
+                      {DateTime.fromISO(meal.created_at).toFormat("h:mm a")}
+                    </Text>
+                  )}
                 </View>
               );
             })
@@ -644,19 +657,41 @@ const styles = StyleSheet.create({
   mealItem: {
     flexDirection: "row",
     justifyContent: "space-between",
+    alignItems: "center",
     paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: "rgba(42, 42, 42, 0.1)",
+  },
+  mealInfo: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginRight: 8,
   },
   mealName: {
     fontSize: 20,
     fontFamily: "Platypi",
     color: "#2A2A2A",
+    flex: 1,
+  },
+  proteinBadge: {
+    backgroundColor: "#333333",
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
   },
   mealProtein: {
-    fontSize: 20,
+    fontSize: 16,
+    fontFamily: "Platypi",
+    color: "#FCE9BC",
+    fontWeight: "600",
+  },
+  mealTime: {
+    fontSize: 16,
     fontFamily: "Platypi",
     color: "#666666",
+    flexShrink: 0,
   },
   placeholderText: {
     fontSize: 16,

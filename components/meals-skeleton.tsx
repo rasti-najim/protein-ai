@@ -1,7 +1,13 @@
-import { View, StyleSheet, Animated } from "react-native";
+import { View, StyleSheet, Animated, Text } from "react-native";
 import { useEffect, useRef } from "react";
 
-export const MealSkeleton = () => {
+interface MealSkeletonProps {
+  showCalculating?: boolean;
+}
+
+export const MealSkeleton = ({
+  showCalculating = false,
+}: MealSkeletonProps) => {
   const fadeAnim = useRef(new Animated.Value(0.3)).current;
 
   useEffect(() => {
@@ -29,7 +35,16 @@ export const MealSkeleton = () => {
 
   return (
     <View style={styles.mealItem}>
-      <Animated.View style={[styles.skeletonName, { opacity: fadeAnim }]} />
+      <View>
+        <Animated.View style={[styles.skeletonName, { opacity: fadeAnim }]} />
+        {showCalculating && (
+          <Animated.Text
+            style={[styles.calculatingText, { opacity: fadeAnim }]}
+          >
+            Calculating protein...
+          </Animated.Text>
+        )}
+      </View>
       <Animated.View style={[styles.skeletonProtein, { opacity: fadeAnim }]} />
     </View>
   );
@@ -48,11 +63,18 @@ const styles = StyleSheet.create({
     height: 24,
     backgroundColor: "rgba(42, 42, 42, 0.1)",
     borderRadius: 4,
+    marginBottom: 4,
   },
   skeletonProtein: {
     width: 60,
     height: 24,
     backgroundColor: "rgba(42, 42, 42, 0.1)",
     borderRadius: 4,
+  },
+  calculatingText: {
+    fontSize: 14,
+    fontFamily: "Platypi",
+    color: "#666666",
+    fontStyle: "italic",
   },
 });
