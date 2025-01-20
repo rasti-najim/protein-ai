@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "@/components/auth-context";
 import * as Haptics from "expo-haptics";
@@ -13,8 +13,20 @@ export default function Account() {
   const handleLogout = async () => {
     try {
       await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      await signOut();
-      // The AuthProvider will handle the redirect to /welcome
+
+      Alert.alert("Log Out", "Are you sure you want to log out?", [
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+        {
+          text: "Log Out",
+          onPress: async () => {
+            await signOut();
+            // The AuthProvider will handle the redirect to /welcome
+          },
+        },
+      ]);
     } catch (error) {
       console.error("Error signing out:", error);
     }
@@ -23,8 +35,25 @@ export default function Account() {
   const handleDeleteAccount = async () => {
     try {
       await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      await deleteAccount();
-      // The AuthProvider will handle the redirect to /welcome after deletion
+
+      Alert.alert(
+        "Delete Account",
+        "Are you sure you want to delete your account? This action cannot be undone.",
+        [
+          {
+            text: "Cancel",
+            style: "cancel",
+          },
+          {
+            text: "Delete",
+            style: "destructive",
+            onPress: async () => {
+              await deleteAccount();
+              // The AuthProvider will handle the redirect to /welcome after deletion
+            },
+          },
+        ]
+      );
     } catch (error) {
       console.error("Error deleting account:", error);
     }
