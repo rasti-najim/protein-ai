@@ -84,8 +84,20 @@ export const MealHistory = ({ userId }: MealHistoryProps) => {
         <Text style={styles.historyDate}>{displayDate}</Text>
         {meals.map((meal, index) => (
           <View key={index} style={styles.mealItem}>
-            <Text style={styles.mealText}>
-              {meal.name} ({meal.protein_amount}g)
+            <View style={styles.mealInfo}>
+              <Text
+                style={styles.mealName}
+                numberOfLines={2}
+                ellipsizeMode="tail"
+              >
+                {meal.name.charAt(0).toUpperCase() + meal.name.slice(1)}
+              </Text>
+              <View style={styles.proteinBadge}>
+                <Text style={styles.proteinText}>{meal.protein_amount}g</Text>
+              </View>
+            </View>
+            <Text style={styles.mealTime}>
+              {DateTime.fromISO(meal.created_at).toFormat("h:mm a")}
             </Text>
           </View>
         ))}
@@ -98,10 +110,10 @@ export const MealHistory = ({ userId }: MealHistoryProps) => {
   }, []);
 
   return (
-    <FlatList
+    <FlashList
       data={dates}
-      initialNumToRender={10}
-      maxToRenderPerBatch={10}
+      // initialNumToRender={10}
+      // maxToRenderPerBatch={10}
       renderItem={renderDateGroup}
       keyExtractor={(date: string) => {
         const meals = groupedMeals[date];
@@ -110,6 +122,7 @@ export const MealHistory = ({ userId }: MealHistoryProps) => {
       onEndReached={loadMoreMeals}
       onEndReachedThreshold={0.5}
       style={styles.list}
+      estimatedItemSize={200}
     />
   );
 };
@@ -129,13 +142,43 @@ const styles = StyleSheet.create({
     color: "#2A2A2A",
   },
   mealItem: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: "rgba(42, 42, 42, 0.1)",
   },
-  mealText: {
-    fontSize: 24,
+  mealInfo: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginRight: 8,
+  },
+  mealName: {
+    fontSize: 20,
     fontFamily: "Platypi",
     color: "#2A2A2A",
+    flex: 1,
+    lineHeight: 24,
+  },
+  proteinBadge: {
+    backgroundColor: "#333333",
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  proteinText: {
+    fontSize: 16,
+    fontFamily: "Platypi",
+    color: "#FCE9BC",
+    fontWeight: "600",
+  },
+  mealTime: {
+    fontSize: 16,
+    fontFamily: "Platypi",
+    color: "#666666",
+    flexShrink: 0,
   },
 });

@@ -539,7 +539,7 @@ export default function Index() {
                   <View style={styles.mealInfo}>
                     <Text
                       style={styles.mealName}
-                      numberOfLines={1}
+                      numberOfLines={2}
                       ellipsizeMode="tail"
                     >
                       {meal.name.charAt(0).toUpperCase() + meal.name.slice(1)}
@@ -674,6 +674,7 @@ const styles = StyleSheet.create({
     fontFamily: "Platypi",
     color: "#2A2A2A",
     flex: 1,
+    lineHeight: 24,
   },
   proteinBadge: {
     backgroundColor: "#333333",
