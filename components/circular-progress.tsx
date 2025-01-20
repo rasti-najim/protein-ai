@@ -11,6 +11,9 @@ interface CircularProgressProps {
   backgroundColor: string;
   children?: React.ReactNode;
   goalText?: string;
+  startAngle?: number;
+  icon?: React.ReactNode;
+  gapDegrees?: number;
 }
 
 export const CircularProgress = ({
@@ -21,10 +24,12 @@ export const CircularProgress = ({
   backgroundColor = "#E0E0E0",
   children,
   goalText,
+  startAngle = 120,
+  icon,
+  gapDegrees = 30,
 }: CircularProgressProps) => {
   const radius = (size - strokeWidth) / 2;
   const circumference = radius * 2 * Math.PI;
-  const gapDegrees = 30; // Size of the gap in degrees
   const arcLength = (360 - gapDegrees) / 360; // Proportion of the circle to draw
 
   const clampedProgress =
@@ -47,8 +52,14 @@ export const CircularProgress = ({
     r: radius,
     strokeWidth: strokeWidth,
     strokeLinecap: "round",
-    transform: `rotate(120 ${size / 2} ${size / 2})`,
+    transform: `rotate(${startAngle} ${size / 2} ${size / 2})`,
   };
+
+  // Calculate icon position in the gap
+  const gapAngle = startAngle + (360 - gapDegrees) / 2; // Middle of the gap
+  const gapRadian = (gapAngle * Math.PI) / 180;
+  const iconLeft = size / 2 + (radius + strokeWidth / 2) * Math.cos(gapRadian);
+  const iconTop = size / 2 + (radius + strokeWidth / 2) * Math.sin(gapRadian);
 
   return (
     <View style={styles.container}>
@@ -74,6 +85,19 @@ export const CircularProgress = ({
           <Text style={styles.goalText}>{goalText}</Text>
         </View>
       )}
+      {icon && (
+        <View
+          style={[
+            styles.iconContainer,
+            {
+              left: iconLeft,
+              top: iconTop,
+            },
+          ]}
+        >
+          {icon}
+        </View>
+      )}
     </View>
   );
 };
@@ -97,5 +121,13 @@ const styles = StyleSheet.create({
   goalText: {
     fontSize: 20,
     fontFamily: "Platypi",
+  },
+  iconContainer: {
+    position: "absolute",
+    width: 24, // Add default width for icon container
+    height: 24, // Add default height for icon container
+    alignItems: "center",
+    justifyContent: "center",
+    transform: [{ translateX: -12 }, { translateY: -12 }], // Center the icon
   },
 });

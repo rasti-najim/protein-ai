@@ -17,21 +17,32 @@ import supabase from "@/lib/supabase";
 import * as Haptics from "expo-haptics";
 import { Image } from "expo-image";
 
+interface UserData {
+  daily_protein_target: number;
+  target_weight: number;
+  target_weight_unit: "lbs" | "kg";
+  exercise_frequency: "0-2" | "3-4" | "5+";
+}
+
 export default function ModifyProteinGoal() {
   const { user } = useAuth();
   const router = useRouter();
   const [proteinGoal, setProteinGoal] = useState("");
   const [currentGoal, setCurrentGoal] = useState<number>(0);
+  const [userData, setUserData] = useState<UserData | null>(null);
 
   useEffect(() => {
     const fetchCurrentGoal = async () => {
       const { data, error } = await supabase
         .from("users")
-        .select("daily_protein_target")
+        .select(
+          "daily_protein_target, target_weight, target_weight_unit, exercise_frequency"
+        )
         .eq("id", user?.id!)
         .single();
 
       if (data) {
+        setUserData(data);
         setCurrentGoal(data.daily_protein_target);
         setProteinGoal(data.daily_protein_target.toString());
       }
@@ -39,6 +50,26 @@ export default function ModifyProteinGoal() {
 
     fetchCurrentGoal();
   }, [user?.id]);
+
+  const calculateSuggestedProtein = () => {
+    if (!userData) return 0;
+
+    let weightInPounds = userData.target_weight;
+    if (userData.target_weight_unit === "kg") {
+      weightInPounds = userData.target_weight * 2.20462;
+    }
+
+    let multiplier = 0.73; // Default for 0-2
+    if (userData.exercise_frequency === "3-4") {
+      multiplier = 0.91;
+    } else if (userData.exercise_frequency === "5+") {
+      multiplier = 1.0;
+    }
+
+    return Math.round(weightInPounds * multiplier);
+  };
+
+  const suggestedProtein = calculateSuggestedProtein();
 
   const handleSave = async () => {
     try {
@@ -87,6 +118,12 @@ export default function ModifyProteinGoal() {
             <Text style={styles.currentGoal}>
               Current goal: {currentGoal}g protein per day
             </Text>
+            {userData && (
+              <Text style={styles.suggestion}>
+                Suggested goal based on your profile: {suggestedProtein}g
+                protein per day
+              </Text>
+            )}
           </View>
 
           <TouchableOpacity
@@ -143,6 +180,13 @@ const styles = StyleSheet.create({
     fontFamily: "Platypi",
     color: "#666666",
     fontStyle: "italic",
+  },
+  suggestion: {
+    fontSize: 16,
+    fontFamily: "Platypi",
+    color: "#4CAF50",
+    fontStyle: "italic",
+    marginTop: 8,
   },
   saveButton: {
     backgroundColor: "#333333",
