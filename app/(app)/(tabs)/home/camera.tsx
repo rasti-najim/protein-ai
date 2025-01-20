@@ -62,14 +62,18 @@ export default function Page() {
         flash={flash ? "on" : "off"}
       >
         <SafeAreaView style={styles.overlay}>
-          <TouchableOpacity
-            style={styles.closeButton}
-            onPress={() => router.back()}
-          >
-            <MaterialCommunityIcons name="close" size={32} color="#FCE9BC" />
-          </TouchableOpacity>
+          <View style={styles.header}>
+            <TouchableOpacity
+              style={styles.closeButton}
+              onPress={() => router.back()}
+            >
+              <MaterialCommunityIcons name="close" size={32} color="#FCE9BC" />
+            </TouchableOpacity>
 
-          <Text style={styles.title}>Scan Meal</Text>
+            <Text style={styles.title}>Scan Meal</Text>
+
+            <View style={styles.headerSpacer} />
+          </View>
 
           <View style={styles.scanFrame}>
             <ScanFrame />
@@ -108,24 +112,32 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#000",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
   },
   overlay: {
     flex: 1,
     backgroundColor: "transparent",
-    padding: 20,
+    paddingHorizontal: 20,
+  },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 40,
   },
   title: {
     fontSize: 42,
     fontFamily: "Platypi",
     color: "#FCE9BC",
     textAlign: "center",
-    marginBottom: 40,
   },
   scanFrame: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    marginVertical: 40,
+    // marginVertical: 40,
   },
   frameImage: {
     width: "100%",
@@ -159,6 +171,7 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 16,
     alignItems: "center",
+    minWidth: 200,
   },
   buttonText: {
     color: "#FCE9BC",
@@ -186,15 +199,14 @@ const styles = StyleSheet.create({
     width: 48, // Same as flashButton width for symmetry
   },
   closeButton: {
-    position: "absolute",
-    top: 20,
-    left: 20,
     width: 48,
     height: 48,
     borderRadius: 24,
     backgroundColor: "#333333",
     justifyContent: "center",
     alignItems: "center",
-    zIndex: 10,
+  },
+  headerSpacer: {
+    width: 48, // Same width as closeButton for symmetry
   },
 });
