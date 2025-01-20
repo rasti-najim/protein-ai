@@ -246,7 +246,7 @@ export default function Progress() {
 
         <Text style={styles.sectionTitle}>History</Text>
 
-        <MealHistory userId={user.id} />
+        {/* <MealHistory userId={user.id} /> */}
       </ScrollView>
     </SafeAreaView>
   );

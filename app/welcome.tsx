@@ -7,6 +7,7 @@ import {
   NativeSyntheticEvent,
   NativeScrollEvent,
   Dimensions,
+  Button,
 } from "react-native";
 import { Image } from "expo-image";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -157,15 +158,26 @@ export default function Page() {
           </ScrollView>
           {renderStepIndicators()}
 
-          <TouchableOpacity
-            style={[styles.button]}
-            onPress={async () => {
-              await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              router.push("/onboarding");
-            }}
-          >
-            <Text style={[styles.buttonText]}>Get Started</Text>
-          </TouchableOpacity>
+          <View style={styles.buttonGroup}>
+            <TouchableOpacity
+              style={[styles.button]}
+              onPress={async () => {
+                await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                router.push("/onboarding");
+              }}
+            >
+              <Text style={[styles.buttonText]}>Get Started</Text>
+            </TouchableOpacity>
+
+            <Button
+              onPress={async () => {
+                await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                router.push("/login");
+              }}
+              title="Already have an account? Log in"
+              color="#333333"
+            />
+          </View>
         </View>
       </Animated.View>
     );
@@ -302,5 +314,25 @@ const styles = StyleSheet.create({
   },
   buttonTextDisabled: {
     color: "#CCCCCC",
+  },
+  buttonGroup: {
+    gap: 16,
+    marginHorizontal: 24,
+    marginBottom: 24,
+  },
+  secondaryButton: {
+    backgroundColor: "transparent",
+    borderWidth: 1,
+    borderColor: "#333333",
+  },
+  secondaryButtonText: {
+    color: "#333333",
+  },
+  loginText: {
+    fontSize: 16,
+    fontFamily: "Platypi",
+    color: "#2A2A2A",
+    textAlign: "center",
+    opacity: 0.8,
   },
 });
