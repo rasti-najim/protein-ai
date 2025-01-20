@@ -1,4 +1,10 @@
-import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Linking,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Image } from "expo-image";
 import { FontAwesome6 } from "@expo/vector-icons";
@@ -10,8 +16,8 @@ export default function Subscription() {
 
   const handleManageSubscription = async () => {
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    // TODO: Implement subscription management logic
-    console.log("Managing subscription");
+    // Open App Store subscriptions page
+    Linking.openURL("itms-apps://apps.apple.com/account/subscriptions");
   };
 
   return (
@@ -25,13 +31,13 @@ export default function Subscription() {
       <Text style={styles.title}>Subscription</Text>
 
       <View style={styles.content}>
-        <View style={styles.subscriptionInfo}>
+        {/* <View style={styles.subscriptionInfo}>
           <FontAwesome6 name="crown" size={32} color="#FFD700" />
           <Text style={styles.planName}>Premium Plan</Text>
           <Text style={styles.planDescription}>
             Access to all premium features and unlimited protein tracking
           </Text>
-        </View>
+        </View> */}
 
         <Button style={styles.manageButton} onPress={handleManageSubscription}>
           <Text style={styles.manageButtonText}>Manage Subscription</Text>

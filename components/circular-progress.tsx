@@ -33,9 +33,12 @@ export const CircularProgress = ({
       : progress;
 
   const progressOffset =
-    typeof clampedProgress === "number" && clampedProgress === 0
-      ? circumference
-      : circumference - (clampedProgress as number) * circumference * arcLength;
+    typeof clampedProgress === "number"
+      ? clampedProgress === 0
+        ? circumference * arcLength
+        : circumference - clampedProgress * circumference * arcLength
+      : circumference -
+        (clampedProgress as unknown as number) * circumference * arcLength;
 
   const commonCircleProps: CircleProps = {
     fill: "none",

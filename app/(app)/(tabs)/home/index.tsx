@@ -523,41 +523,7 @@ export default function Index() {
             );
           })}
         </View>
-
-        <Text style={styles.sectionTitle}>This Week</Text>
-        <Text style={styles.placeholderText}>
-          Ideally, we can show a graph here, but for now this just displays the
-          blur mask
-        </Text>
       </ScrollView>
-
-      {!isBottomSheetVisible && renderFloatingButton()}
-      <BottomSheet
-        ref={bottomSheetRef}
-        snapPoints={snapPoints}
-        onChange={handleSheetChanges}
-        index={-1}
-        backgroundStyle={styles.bottomSheetBackground}
-        backdropComponent={BlurOverlay}
-        enablePanDownToClose
-        style={{
-          zIndex: 3, // Higher than tab bar
-        }}
-        handleIndicatorStyle={{
-          backgroundColor: "#FCE9BC",
-        }}
-      >
-        <BottomSheetView style={styles.contentContainer}>
-          <Streak
-            currentStreak={1}
-            daysToNextLevel={2}
-            onClose={() => {
-              setIsBottomSheetVisible(false);
-              bottomSheetRef.current?.close();
-            }}
-          />
-        </BottomSheetView>
-      </BottomSheet>
 
       {/* {showGoalReached && (
         <GoalReached
