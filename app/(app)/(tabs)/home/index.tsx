@@ -119,6 +119,7 @@ export default function Index() {
         streak_emoji: data?.[0]?.streak_emoji || "",
         days_to_next_level: data?.[0]?.days_to_next_level || 0,
       });
+      console.log("streak", streak);
     } catch (error) {
       console.error(error);
     }

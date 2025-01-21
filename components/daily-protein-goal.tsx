@@ -7,7 +7,6 @@ import {
   ScrollView,
 } from "react-native";
 import { CircularProgress } from "./circular-progress";
-import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useEffect, useRef } from "react";
 import * as Linking from "expo-linking";
 
