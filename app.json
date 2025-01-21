@@ -10,7 +10,6 @@
     "newArchEnabled": true,
     "ios": {
       "usesAppleSignIn": true,
-      "supportsTablet": true,
       "bundleIdentifier": "com.barnburnerhockey.proteinai",
       "infoPlist": {
         "CFBundleURLTypes": [
@@ -73,9 +72,7 @@
         }
       ],
       "expo-secure-store",
-      [
-        "expo-apple-authentication"
-      ],
+      ["expo-apple-authentication"],
       [
         "@react-native-google-signin/google-signin",
         {

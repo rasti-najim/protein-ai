@@ -31,27 +31,9 @@ export default function Page() {
   const [currentStep, setCurrentStep] = useState(0);
 
   const scrollViewRef = useRef<ScrollView>(null);
-  const logoScale = useSharedValue(0.8);
-  const modalSlide = useSharedValue(height);
+  const logoScale = useSharedValue(1);
+  const modalSlide = useSharedValue(0);
   const dotScale = useSharedValue(1);
-
-  useEffect(() => {
-    modalSlide.value = withSequence(
-      withTiming(0, {
-        duration: 800,
-        easing: Easing.out(Easing.back(1.5)),
-      }),
-      withSpring(0, {
-        damping: 20,
-        stiffness: 90,
-      })
-    );
-
-    logoScale.value = withSpring(1, {
-      damping: 20,
-      stiffness: 90,
-    });
-  }, []);
 
   const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const contentOffset = event.nativeEvent.contentOffset.x;
@@ -60,19 +42,6 @@ export default function Page() {
       setCurrentStep(newStep);
     }
   };
-
-  useEffect(() => {
-    modalSlide.value = withSequence(
-      withTiming(0, {
-        duration: 800,
-        easing: Easing.out(Easing.back(1.5)),
-      }),
-      withSpring(0, {
-        damping: 20,
-        stiffness: 90,
-      })
-    );
-  }, [logoScale, modalSlide]);
 
   useEffect(() => {
     dotScale.value = withSequence(
@@ -145,7 +114,7 @@ export default function Page() {
             horizontal
             pagingEnabled
             showsHorizontalScrollIndicator={false}
-            // scrollEventThrottle={16}
+            scrollEventThrottle={16}
             // onMomentumScrollEnd={handleScroll}
           >
             {onboardingSteps.map((step, index) => (
