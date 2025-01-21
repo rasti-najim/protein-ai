@@ -1,0 +1,788 @@
+import {
+  Text,
+  View,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Animated,
+  Pressable,
+  useWindowDimensions,
+  LayoutChangeEvent,
+  ViewStyle,
+  Alert,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { FontAwesome6 } from "@expo/vector-icons";
+import { CircularProgress } from "@/components/circular-progress";
+import BottomSheet, {
+  BottomSheetScrollView,
+  BottomSheetView,
+} from "@gorhom/bottom-sheet";
+import { useCallback, useRef, useMemo, useState, useEffect } from "react";
+import { Streak } from "@/components/streak";
+import { BlurOverlay } from "@/components/blur-overlay";
+import { BlurView } from "expo-blur";
+import { useNavigation } from "@react-navigation/native";
+import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
+import * as Haptics from "expo-haptics";
+import * as ImagePicker from "expo-image-picker";
+import { Image } from "expo-image";
+import supabase from "@/lib/supabase";
+import { decode } from "base64-arraybuffer";
+import { DateTime } from "luxon";
+import { useAuth } from "@/components/auth-context";
+import { MealSkeleton } from "@/components/meals-skeleton";
+import { GoalReached } from "@/components/goal-reached";
+import { usePhoto } from "@/components/photo-context";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Button } from "@/components/button";
+import Superwall from "@superwall/react-native-superwall";
+
+export interface Meal {
+  name: string;
+  protein: number;
+  scanned: boolean;
+  created_at: string;
+}
+
+interface StreakData {
+  current_streak: number;
+  max_streak: number;
+  streak_name: string;
+  streak_emoji: string;
+  days_to_next_level: number;
+}
+
+export default function Index() {
+  const { user } = useAuth();
+  const [isBottomSheetVisible, setIsBottomSheetVisible] = useState(false);
+  const [isFabExpanded, setIsFabExpanded] = useState(false);
+  const menuAnimation = useRef(new Animated.Value(0)).current;
+  const router = useRouter();
+  const bottomSheetRef = useRef<BottomSheet>(null);
+  const snapPoints = useMemo(() => ["70%"], []);
+  const { width: screenWidth } = useWindowDimensions();
+  const menuWidth = Math.min(screenWidth * 0.6, 250); // 60% of screen width, max 250px
+  const [menuItemWidths, setMenuItemWidths] = useState<{
+    [key: string]: number;
+  }>({});
+  const [meals, setMeals] = useState<Meal[]>([]);
+  const [dailyGoal, setDailyGoal] = useState<number>(200);
+  const [currentProtein, setCurrentProtein] = useState<number>(115);
+  const progress = currentProtein / dailyGoal;
+  const [isScanning, setIsScanning] = useState(false);
+  const [showGoalReached, setShowGoalReached] = useState(false);
+  const [hasShownGoalReached, setHasShownGoalReached] = useState(false);
+  const { photo: scannedPhoto } = usePhoto();
+  const [streak, setStreak] = useState<StreakData>({
+    current_streak: 0,
+    max_streak: 0,
+    streak_name: "",
+    streak_emoji: "",
+    days_to_next_level: 0,
+  });
+
+  const checkIfWeShouldResetGoalMessage = async () => {
+    try {
+      const storedDate = await AsyncStorage.getItem("goalMessageDate");
+      const today = DateTime.now().toFormat("yyyy-MM-dd");
+
+      if (!storedDate || storedDate !== today) {
+        // If there's no stored date or it's a different day, reset
+        setShowGoalReached(false);
+        await AsyncStorage.setItem("goalMessageDate", today);
+        await AsyncStorage.setItem("hasShownGoalReached", "false");
+      } else {
+        // Same day, so retrieve whether message was shown
+        const seenMsg = await AsyncStorage.getItem("hasShownGoalReached");
+        setShowGoalReached(seenMsg === "true");
+      }
+    } catch (e) {
+      console.error("Failed to check or reset goal message status", e);
+    }
+  };
+
+  useEffect(() => {
+    checkIfWeShouldResetGoalMessage();
+  }, []);
+
+  const fetchStreak = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("user_streak_view")
+        .select("*")
+        .eq("user_id", user?.id!);
+      setStreak({
+        current_streak: data?.[0]?.current_streak || 0,
+        max_streak: data?.[0]?.max_streak || 0,
+        streak_name: data?.[0]?.streak_name || "",
+        streak_emoji: data?.[0]?.streak_emoji || "",
+        days_to_next_level: data?.[0]?.days_to_next_level || 0,
+      });
+      console.log("streak", streak);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchStreak();
+    }, [])
+  );
+
+  useFocusEffect(
+    useCallback(() => {
+      const fetchDailyGoal = async () => {
+        const { data, error } = await supabase
+          .from("users")
+          .select("*")
+          .eq("id", user?.id!);
+        setDailyGoal(data?.[0]?.daily_protein_target || 200);
+        // setCurrentProtein(data?.[0]?. || 115);
+      };
+      fetchDailyGoal();
+    }, [])
+  );
+
+  useFocusEffect(
+    useCallback(() => {
+      const fetchMeals = async () => {
+        // Get today's date at midnight in UTC
+        const today = DateTime.now().startOf("day").toISO();
+
+        const { data, error } = await supabase
+          .from("meals")
+          .select("*")
+          .eq("user_id", user?.id!)
+          .gte("created_at", today)
+          .order("created_at", { ascending: false });
+
+        if (data) {
+          // Calculate total protein intake for today
+          const todaysTotalProtein = data.reduce(
+            (sum, meal) => sum + meal.protein_amount,
+            0
+          );
+          setCurrentProtein(todaysTotalProtein);
+
+          // Set meals data
+          setMeals(
+            data.map((meal) => ({
+              name: meal.name,
+              protein: meal.protein_amount,
+              scanned: true,
+              created_at: meal.created_at || "",
+            }))
+          );
+        }
+      };
+      fetchMeals();
+    }, [])
+  );
+
+  useEffect(() => {
+    const checkGoalReached = async () => {
+      const seenMsg = await AsyncStorage.getItem("hasShownGoalReached");
+      const today = DateTime.now().toFormat("yyyy-MM-dd");
+      const storedDate = await AsyncStorage.getItem("goalMessageDate");
+
+      if (
+        currentProtein >= dailyGoal &&
+        (seenMsg !== "true" || storedDate !== today)
+      ) {
+        setShowGoalReached(true);
+        await AsyncStorage.setItem("hasShownGoalReached", "true");
+        await AsyncStorage.setItem("goalMessageDate", today);
+        // Fetch updated streak data
+        await fetchStreak();
+      }
+    };
+    checkGoalReached();
+  }, [currentProtein, dailyGoal]);
+
+  useEffect(() => {
+    if (scannedPhoto) {
+      console.log("uploading photo", scannedPhoto.uri);
+      handleUpload({
+        uri: scannedPhoto.uri,
+        fileName: `photo.${scannedPhoto.uri?.split(".")[1]}`,
+        width: scannedPhoto.width,
+        height: scannedPhoto.height,
+        base64: scannedPhoto.base64,
+      });
+    }
+  }, [scannedPhoto]);
+
+  const handleBadgePress = useCallback(async () => {
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    router.push({
+      pathname: "/home/streak",
+      params: {
+        streak: JSON.stringify(streak),
+      },
+    });
+  }, [streak]);
+
+  const handleSheetChanges = useCallback((index: number) => {
+    if (index === -1) {
+      setIsBottomSheetVisible(false);
+    }
+  }, []);
+
+  const toggleMenu = async () => {
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    const toValue = isFabExpanded ? 0 : 1;
+    setIsFabExpanded(!isFabExpanded);
+    Animated.spring(menuAnimation, {
+      toValue,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const onTextLayout = (event: LayoutChangeEvent, key: string) => {
+    const { width } = event.nativeEvent.layout;
+    setMenuItemWidths((prev) => ({
+      ...prev,
+      [key]: width + 80, // Add padding for icon and spacing
+    }));
+  };
+
+  const getMenuItemStyle = (key: string) => ({
+    ...styles.fabMenuItem,
+    width: menuItemWidths[key] || "auto",
+    minWidth: Math.min(screenWidth * 0.45, 220), // Increased minimum width
+  });
+
+  const handleImagePick = async () => {
+    Superwall.shared.register("upload_photo").then(async () => {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ["images"],
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 1,
+        base64: true,
+      });
+
+      if (!result.canceled) {
+        // Navigate to upload screen with the selected image
+        await handleUpload(result.assets[0]);
+      }
+    });
+  };
+
+  const handleUpload = async (photo: ImagePicker.ImagePickerAsset) => {
+    setIsScanning(true);
+    // Add temporary loading state to meals
+    const tempId = DateTime.now().toMillis(); // Create unique ID for the loading state
+    setMeals((prev) => [
+      {
+        name: "",
+        protein: 0,
+        scanned: false,
+        id: tempId, // Add temporary ID to identify this loading state
+        created_at: DateTime.now().toUTC().toISO(),
+      },
+      ...prev,
+    ]);
+
+    try {
+      if (!photo?.base64) return;
+      const { data, error } = await supabase.storage
+        .from("temp")
+        .upload(
+          `${user?.id}/${DateTime.now().toISO()}.${
+            photo?.fileName?.split(".")[1]
+          }`,
+          decode(photo?.base64),
+          {
+            contentType: `${photo?.mimeType}`,
+          }
+        );
+
+      if (error) {
+        console.error(error);
+        return;
+      }
+
+      const { data: scanData, error: scanError } =
+        await supabase.functions.invoke("scan-photo", {
+          body: {
+            imagePath: data.path,
+            createdAt: DateTime.now().toUTC().toISO(),
+          },
+        });
+
+      if (scanError) {
+        console.error(scanError);
+        return;
+      }
+
+      // Remove the loading skeleton
+      setMeals((prev) => prev.filter((meal) => meal.id !== tempId));
+
+      // Check if the image is not a meal
+      if (scanData.not_a_meal) {
+        Alert.alert(
+          "Not a Meal",
+          "The image you uploaded doesn't appear to be a meal. Please try again with a different photo."
+        );
+        return;
+      }
+
+      // If it is a meal, update the UI with the meal data
+      setMeals((prev) => [
+        {
+          name: scanData.meal_name,
+          protein: scanData.protein_g,
+          scanned: true,
+          created_at: DateTime.now().toUTC().toISO(),
+        },
+        ...prev,
+      ]);
+
+      // Update current protein intake
+      setCurrentProtein((prev) => prev + scanData.protein_g);
+    } catch (error) {
+      console.error(error);
+      // Remove the loading skeleton in case of error
+      setMeals((prev) => prev.filter((meal) => meal.id !== tempId));
+    } finally {
+      setIsScanning(false);
+    }
+  };
+
+  const handleManualPress = () => {
+    Superwall.shared.register("manual_entry").then(() => {
+      router.push({
+        pathname: "/(app)/(tabs)/home/manual",
+        // params: {
+        //   setMeals: setMeals,
+        //   setCurrentProtein: setCurrentProtein,
+        // },
+      });
+    });
+  };
+
+  const handleCameraPress = () => {
+    Superwall.shared.register("scan_entry").then(() => {
+      router.push("/home/camera");
+    });
+  };
+
+  const renderFloatingButton = () => (
+    <>
+      {isFabExpanded && (
+        <Animated.View
+          style={[
+            {
+              position: "absolute",
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              opacity: menuAnimation,
+              zIndex: 0,
+            },
+          ]}
+        >
+          <BlurView
+            intensity={10}
+            tint="dark"
+            style={StyleSheet.absoluteFillObject}
+          />
+        </Animated.View>
+      )}
+      <View style={[styles.fabContainer, { zIndex: 2 }]}>
+        <Animated.View
+          style={[
+            styles.fabMenu,
+            {
+              opacity: menuAnimation,
+              transform: [
+                {
+                  translateY: menuAnimation.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [20, 0],
+                  }),
+                },
+                {
+                  scale: menuAnimation.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [0.8, 1],
+                  }),
+                },
+              ],
+            },
+          ]}
+        >
+          {[
+            {
+              text: "Enter Manually",
+              icon: "pencil",
+              onPress: handleManualPress,
+            },
+            {
+              text: "Upload Photo",
+              icon: "image",
+              onPress: async () => {
+                toggleMenu();
+                await handleImagePick();
+              },
+            },
+            { text: "Take Photo", icon: "camera", onPress: handleCameraPress },
+          ].map((item, index) => (
+            <Animated.View
+              key={item.text}
+              style={{
+                transform: [
+                  {
+                    translateX: menuAnimation.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [100, 0],
+                    }),
+                  },
+                ],
+                opacity: menuAnimation,
+              }}
+            >
+              <Button
+                style={[
+                  styles.fabMenuItem,
+                  {
+                    marginBottom: index === 2 ? 0 : 12,
+                  },
+                ]}
+                onPress={item.onPress}
+              >
+                <Text style={styles.menuItemText}>{item.text}</Text>
+                <FontAwesome6 name={item.icon} size={24} color="#2A2A2A" />
+              </Button>
+            </Animated.View>
+          ))}
+        </Animated.View>
+
+        <Animated.View
+          style={[
+            styles.fab,
+            {
+              transform: [
+                {
+                  rotate: menuAnimation.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: ["0deg", "45deg"],
+                  }),
+                },
+              ],
+            },
+          ]}
+        >
+          <Pressable onPress={toggleMenu} style={styles.fabButton}>
+            <FontAwesome6 name="plus" size={32} color="#FCE9BC" />
+          </Pressable>
+        </Animated.View>
+      </View>
+    </>
+  );
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <Image
+        source={require("@/assets/images/background.png")}
+        style={styles.background}
+        contentFit="cover"
+      />
+      <ScrollView
+        style={styles.scrollView}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.header}>
+          <Text style={styles.title}>Protein AI</Text>
+          <Pressable onPress={handleBadgePress}>
+            <View style={styles.badge}>
+              <Text style={styles.badgeNumber}>
+                {streak.current_streak} {streak.streak_emoji}
+              </Text>
+            </View>
+          </Pressable>
+        </View>
+
+        <View style={styles.todayContainer}>
+          <Text style={styles.sectionTitle}>Today</Text>
+          <FontAwesome6
+            name="bolt"
+            size={16}
+            color="#7FEA71"
+            style={styles.lightningIcon}
+          />
+        </View>
+
+        <View style={styles.progressContainer}>
+          <CircularProgress
+            progress={progress}
+            size={200}
+            strokeWidth={8}
+            color="#7FEA71"
+            backgroundColor="#E0E0E0"
+            goalText={`${dailyGoal}g`}
+          >
+            <View style={styles.progressContent}>
+              <Text style={styles.progressNumber}>{currentProtein}g</Text>
+              <Text style={styles.progressLabel}>protein</Text>
+            </View>
+          </CircularProgress>
+        </View>
+
+        <Text style={styles.sectionTitle}>Meals</Text>
+        <View style={styles.mealsList}>
+          {meals.length === 0 ? (
+            <Text style={styles.placeholderText}>
+              No meals logged today. Tap + to add your first meal!
+            </Text>
+          ) : (
+            meals.map((meal, index) => {
+              if (isScanning && !meal.scanned) {
+                return <MealSkeleton key={index} showCalculating={true} />;
+              }
+              return (
+                <View key={index} style={styles.mealItem}>
+                  <View style={styles.mealInfo}>
+                    <Text
+                      style={styles.mealName}
+                      numberOfLines={2}
+                      ellipsizeMode="tail"
+                    >
+                      {meal.name.charAt(0).toUpperCase() + meal.name.slice(1)}
+                    </Text>
+                    <View style={styles.proteinBadge}>
+                      <Text style={styles.mealProtein}>{meal.protein}g</Text>
+                    </View>
+                  </View>
+                  {meal.created_at && (
+                    <Text style={styles.mealTime}>
+                      {DateTime.fromISO(meal.created_at).toFormat("h:mm a")}
+                    </Text>
+                  )}
+                </View>
+              );
+            })
+          )}
+        </View>
+      </ScrollView>
+
+      {renderFloatingButton()}
+
+      {/* {showGoalReached && (
+        <GoalReached
+          onClose={() => {
+            setShowGoalReached(false);
+            setHasShownGoalReached(true);
+          }}
+        />
+      )} */}
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    // backgroundColor: "#FCE9BC",
+  },
+  scrollView: {
+    flex: 1,
+    padding: 20,
+  },
+  background: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 8,
+  },
+  todayContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 8,
+  },
+  title: {
+    fontSize: 42,
+    fontFamily: "Platypi",
+    color: "#2A2A2A",
+  },
+  badge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    padding: 8,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: "#2A2A2A",
+  },
+  badgeNumber: {
+    fontSize: 16,
+    fontWeight: "bold",
+    fontFamily: "Platypi",
+    color: "#2A2A2A",
+  },
+  sectionTitle: {
+    fontSize: 28,
+    fontFamily: "Platypi",
+    color: "#2A2A2A",
+    marginBottom: 16,
+  },
+  lightningIcon: {
+    marginBottom: 8,
+  },
+  progressContainer: {
+    alignItems: "center",
+    marginBottom: 32,
+  },
+  progressContent: {
+    alignItems: "center",
+  },
+  progressNumber: {
+    fontSize: 48,
+    fontFamily: "Platypi",
+    color: "#2A2A2A",
+    fontWeight: "600",
+  },
+  progressLabel: {
+    fontSize: 20,
+    fontFamily: "Platypi",
+    color: "#2A2A2A",
+  },
+  progressGoal: {
+    fontSize: 16,
+    fontFamily: "Platypi",
+    color: "#666666",
+    marginTop: 4,
+  },
+  mealsList: {
+    marginBottom: 32,
+  },
+  mealItem: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "rgba(42, 42, 42, 0.1)",
+  },
+  mealInfo: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginRight: 8,
+  },
+  mealName: {
+    fontSize: 20,
+    fontFamily: "Platypi",
+    color: "#2A2A2A",
+    flex: 1,
+    lineHeight: 24,
+  },
+  proteinBadge: {
+    backgroundColor: "#333333",
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  mealProtein: {
+    fontSize: 16,
+    fontFamily: "Platypi",
+    color: "#FCE9BC",
+    fontWeight: "600",
+  },
+  mealTime: {
+    fontSize: 16,
+    fontFamily: "Platypi",
+    color: "#666666",
+    flexShrink: 0,
+  },
+  placeholderText: {
+    fontSize: 16,
+    fontFamily: "Platypi",
+    color: "#666666",
+    fontStyle: "italic",
+    textAlign: "center",
+    marginTop: 8,
+  },
+  contentContainer: {
+    flex: 1,
+    padding: 20,
+  },
+  bottomSheetBackground: {
+    backgroundColor: "#333333",
+    borderTopLeftRadius: 40,
+    borderTopRightRadius: 40,
+  },
+  fabContainer: {
+    position: "absolute",
+    right: 20,
+    bottom: 20,
+    alignItems: "flex-end",
+  },
+  fabMenu: {
+    marginBottom: 16,
+    alignItems: "flex-end",
+  },
+  fab: {
+    backgroundColor: "#333333",
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 4.65,
+    elevation: 8,
+  },
+  fabButton: {
+    width: "100%",
+    height: "100%",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  fabMenuItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "flex-end",
+    gap: 16,
+    backgroundColor: "#FCE9BC",
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    borderRadius: 16,
+    minWidth: 200,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.15,
+    shadowRadius: 3.84,
+    elevation: 5,
+    borderWidth: 2,
+    borderColor: "#2A2A2A",
+  },
+  menuItemText: {
+    fontSize: 20,
+    fontFamily: "Platypi",
+    color: "#2A2A2A",
+  },
+  blurOverlay: {
+    position: "absolute",
+    top: -100,
+    left: 0,
+    right: 0,
+    bottom: -100,
+    zIndex: 1,
+  },
+});

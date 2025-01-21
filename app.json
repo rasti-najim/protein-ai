@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "protein-ai",
+    "name": "Protein AI",
     "slug": "protein-ai",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -9,13 +9,30 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "usesAppleSignIn": true,
+      "bundleIdentifier": "com.barnburnerhockey.proteinai",
+      "infoPlist": {
+        "CFBundleURLTypes": [
+          {
+            "CFBundleURLSchemes": [
+              "com.googleusercontent.apps.927591352565-0bj8tf93uehs19ddo63gmdq77am4bkdh"
+            ]
+          }
+        ]
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO"
+      ],
+      "package": "com.barnburnerhockey.proteinai"
     },
     "web": {
       "bundler": "metro",
@@ -30,12 +47,51 @@
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 200,
           "resizeMode": "contain",
-          "backgroundColor": "#ffffff"
+          "backgroundColor": "#FBF5EA"
         }
-      ]
+      ],
+      [
+        "expo-font",
+        {
+          "fonts": [
+            "./assets/fonts/Platypi.ttf",
+            "./assets/fonts/Platypi-Italic.ttf"
+          ]
+        }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow Protein AI to access your camera to scan meals and barcodes."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow Protein AI to access your photos to scan meals and barcodes."
+        }
+      ],
+      "expo-secure-store",
+      ["expo-apple-authentication"],
+      [
+        "@react-native-google-signin/google-signin",
+        {
+          "iosUrlScheme": "com.googleusercontent.apps.927591352565-0bj8tf93uehs19ddo63gmdq77am4bkdh"
+        }
+      ],
+      "expo-localization"
     ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "56058b0e-09db-4478-9dce-6a36aa6bb344"
+      }
+    },
+    "owner": "rasti_najim"
   }
 }
