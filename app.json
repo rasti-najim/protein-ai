@@ -19,6 +19,9 @@
             ]
           }
         ]
+      },
+      "config": {
+        "usesNonExemptEncryption": false
       }
     },
     "android": {
@@ -62,13 +65,13 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "Allow Protein AI to access your camera to scan meals and barcodes."
+          "cameraPermission": "We request access to your camera to capture photos of your meals to analyze and track protein intake."
         }
       ],
       [
         "expo-image-picker",
         {
-          "photosPermission": "Allow Protein AI to access your photos to scan meals and barcodes."
+          "photosPermission": "We request access to your photos to enable selection of existing meal photos from your library to analyze and track protein intake."
         }
       ],
       "expo-secure-store",

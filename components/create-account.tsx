@@ -1,5 +1,11 @@
 import React from "react";
-import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Linking,
+} from "react-native";
 import { Image } from "expo-image";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { FontAwesome6 } from "@expo/vector-icons";
@@ -108,6 +114,16 @@ export default function CreateAccount({
     onBack();
   };
 
+  const handlePrivacyPolicy = () => {
+    Linking.openURL("https://garrudnyai.github.io/ProteinAI/");
+  };
+
+  const handleTerms = () => {
+    Linking.openURL(
+      "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/"
+    );
+  };
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Create Your{"\n"}Account</Text>
@@ -132,9 +148,18 @@ export default function CreateAccount({
         />
       </View>
 
-      {/* <Text style={styles.termsText}>
-        By continuing, you agree to our Terms of Service and Privacy Policy
-      </Text> */}
+      <View style={styles.termsContainer}>
+        <Text style={styles.termsText}>
+          By continuing, you agree to our{" "}
+          <Text style={styles.termsLink} onPress={handleTerms}>
+            Terms of Service
+          </Text>{" "}
+          and{" "}
+          <Text style={styles.termsLink} onPress={handlePrivacyPolicy}>
+            Privacy Policy
+          </Text>
+        </Text>
+      </View>
     </View>
   );
 }
@@ -181,15 +206,22 @@ const styles = StyleSheet.create({
     color: "#2A2A2A",
     marginVertical: 8,
   },
+  termsContainer: {
+    position: "absolute",
+    bottom: 40,
+    left: 20,
+    right: 20,
+  },
   termsText: {
     fontSize: 14,
     fontFamily: "Platypi",
     color: "#2A2A2A",
     textAlign: "center",
     opacity: 0.6,
-    position: "absolute",
-    bottom: 40,
-    left: 20,
-    right: 20,
+  },
+  termsLink: {
+    textDecorationLine: "underline",
+    color: "#2A2A2A",
+    opacity: 0.8,
   },
 });
