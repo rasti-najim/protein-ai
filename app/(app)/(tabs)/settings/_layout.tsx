@@ -7,6 +7,7 @@ export default function SettingsLayout() {
       <Stack.Screen name="protein-goal" />
       <Stack.Screen name="account" />
       <Stack.Screen name="subscription" />
+      <Stack.Screen name="legal" />
     </Stack>
   );
 }

@@ -16,6 +16,12 @@
     }
   },
   "submit": {
-    "production": {}
+    "production": {
+      "ios": {
+        "appleId": "info@barnburnerhockey.com",
+        "ascAppId": "6740733967",
+        "appleTeamId": "AYGF2W6K4N"
+      }
+    }
   }
 }

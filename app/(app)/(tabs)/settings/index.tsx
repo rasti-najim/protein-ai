@@ -25,6 +25,11 @@ export default function Settings() {
       route: "/settings/subscription",
       icon: "chevron-right",
     },
+    {
+      title: "Legal",
+      route: "/settings/legal",
+      icon: "chevron-right",
+    },
   ];
 
   const handleLogout = async () => {
