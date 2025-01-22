@@ -354,6 +354,7 @@ export default function Index() {
 
   const handleManualPress = () => {
     Superwall.shared.register("manual_entry").then(() => {
+      toggleMenu();
       router.push({
         pathname: "/(app)/(tabs)/home/manual",
         // params: {
@@ -366,6 +367,7 @@ export default function Index() {
 
   const handleCameraPress = () => {
     Superwall.shared.register("scan_entry").then(() => {
+      toggleMenu();
       router.push("/home/camera");
     });
   };
