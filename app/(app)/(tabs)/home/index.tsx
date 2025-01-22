@@ -37,6 +37,9 @@ import { usePhoto } from "@/components/photo-context";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Button } from "@/components/button";
 import Superwall from "@superwall/react-native-superwall";
+import ReanimatedSwipeable from "react-native-gesture-handler/ReanimatedSwipeable";
+import Reanimated, { SharedValue } from "react-native-reanimated";
+import { useAnimatedStyle } from "react-native-reanimated";
 
 export interface Meal {
   name: string;
@@ -354,7 +357,6 @@ export default function Index() {
 
   const handleManualPress = () => {
     Superwall.shared.register("manual_entry").then(() => {
-      toggleMenu();
       router.push({
         pathname: "/(app)/(tabs)/home/manual",
         // params: {
@@ -363,13 +365,14 @@ export default function Index() {
         // },
       });
     });
+    toggleMenu();
   };
 
   const handleCameraPress = () => {
     Superwall.shared.register("scan_entry").then(() => {
-      toggleMenu();
       router.push("/home/camera");
     });
+    toggleMenu();
   };
 
   const renderFloatingButton = () => (
