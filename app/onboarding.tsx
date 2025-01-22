@@ -69,12 +69,12 @@ export default function Onboarding() {
     if (currentStep < totalSteps - 1) {
       await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Soft);
 
-      if (currentStep === 5) {
-        Superwall.shared.register("onboarding").then((result) => {
-          setCurrentStep(currentStep + 1);
-          return;
-        });
-      }
+      // if (currentStep === 5) {
+      //   Superwall.shared.register("onboarding").then((result) => {
+      //     setCurrentStep(currentStep + 1);
+      //     return;
+      //   });
+      // }
 
       setCurrentStep(currentStep + 1);
     } else {

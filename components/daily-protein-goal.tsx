@@ -7,7 +7,7 @@ import {
   ScrollView,
 } from "react-native";
 import { CircularProgress } from "./circular-progress";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import * as Linking from "expo-linking";
 
 interface DailyProteinGoalProps {
@@ -27,6 +27,7 @@ export const DailyProteinGoal = ({
 }: DailyProteinGoalProps) => {
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0.8)).current;
+  const [isCitationExpanded, setIsCitationExpanded] = useState(false);
 
   const calculateProteinGoal = () => {
     let weightInPounds = targetWeight;
@@ -98,58 +99,72 @@ export const DailyProteinGoal = ({
       </ScrollView>
 
       <View style={styles.citationContainer}>
-        <Text style={styles.citationTitle}>
-          Daily Protein Intake plan based on the following sources, among other
-          peer-reviewed studies:
-        </Text>
-        <View style={styles.bulletPoints}>
-          <Text style={styles.citationText}>
-            <Text
-              style={styles.citationLink}
-              onPress={() =>
-                Linking.openURL(
-                  "https://www.healthline.com/nutrition/how-much-protein-per-day"
-                )
-              }
-            >
-              • Dietary Protein Intake
-            </Text>
+        <TouchableOpacity
+          style={styles.citationHeader}
+          onPress={() => setIsCitationExpanded(!isCitationExpanded)}
+        >
+          <Text style={styles.citationTitle}>Sources & References</Text>
+          <Text style={styles.expandButton}>
+            {isCitationExpanded ? "▼" : "▲"}
           </Text>
-          <Text style={styles.citationText}>
-            <Text
-              style={styles.citationLink}
-              onPress={() =>
-                Linking.openURL(
-                  "https://blog.nasm.org/nutrition/how-much-protein-should-you-eat-per-day-for-weight-loss?utm_source=blog&utm_medium=referral&utm_campaign=organic&utm_content=safeandhealthyweightloss#:~:text=a%20great%20option!-,Summary,if%20aiming%20for%20weight%20loss."
-                )
-              }
-            >
-              • Protein & Weight Loss
+        </TouchableOpacity>
+
+        {isCitationExpanded && (
+          <>
+            <Text style={styles.citationSubtitle}>
+              Daily Protein Intake plan based on the following sources, among
+              other peer-reviewed studies:
             </Text>
-          </Text>
-          <Text style={styles.citationText}>
-            <Text
-              style={styles.citationLink}
-              onPress={() =>
-                Linking.openURL(
-                  "https://pmc.ncbi.nlm.nih.gov/articles/PMC5852756/"
-                )
-              }
-            >
-              • Protein & Muscle Hypertrophy
-            </Text>
-          </Text>
-          <Text style={styles.citationText}>
-            <Text
-              style={styles.citationLink}
-              onPress={() =>
-                Linking.openURL("https://pubmed.ncbi.nlm.nih.gov/24092765/")
-              }
-            >
-              • Dietary Protein for Lean Athletes
-            </Text>
-          </Text>
-        </View>
+            <View style={styles.bulletPoints}>
+              <Text style={styles.citationText}>
+                <Text
+                  style={styles.citationLink}
+                  onPress={() =>
+                    Linking.openURL(
+                      "https://www.healthline.com/nutrition/how-much-protein-per-day"
+                    )
+                  }
+                >
+                  • Dietary Protein Intake
+                </Text>
+              </Text>
+              <Text style={styles.citationText}>
+                <Text
+                  style={styles.citationLink}
+                  onPress={() =>
+                    Linking.openURL(
+                      "https://blog.nasm.org/nutrition/how-much-protein-should-you-eat-per-day-for-weight-loss?utm_source=blog&utm_medium=referral&utm_campaign=organic&utm_content=safeandhealthyweightloss#:~:text=a%20great%20option!-,Summary,if%20aiming%20for%20weight%20loss."
+                    )
+                  }
+                >
+                  • Protein & Weight Loss
+                </Text>
+              </Text>
+              <Text style={styles.citationText}>
+                <Text
+                  style={styles.citationLink}
+                  onPress={() =>
+                    Linking.openURL(
+                      "https://pmc.ncbi.nlm.nih.gov/articles/PMC5852756/"
+                    )
+                  }
+                >
+                  • Protein & Muscle Hypertrophy
+                </Text>
+              </Text>
+              <Text style={styles.citationText}>
+                <Text
+                  style={styles.citationLink}
+                  onPress={() =>
+                    Linking.openURL("https://pubmed.ncbi.nlm.nih.gov/24092765/")
+                  }
+                >
+                  • Dietary Protein for Lean Athletes
+                </Text>
+              </Text>
+            </View>
+          </>
+        )}
       </View>
     </View>
   );
@@ -219,15 +234,33 @@ const styles = StyleSheet.create({
   },
   citationContainer: {
     backgroundColor: "#FCE9BC",
-    paddingVertical: 16,
+    paddingVertical: 12,
     borderTopWidth: 1,
     borderTopColor: "rgba(42, 42, 42, 0.1)",
+  },
+  citationHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 16,
   },
   citationTitle: {
     fontSize: 16,
     fontFamily: "Platypi",
     color: "#666666",
+    fontWeight: "600",
+  },
+  citationSubtitle: {
+    fontSize: 14,
+    fontFamily: "Platypi",
+    color: "#666666",
+    marginTop: 12,
     marginBottom: 8,
+    paddingHorizontal: 16,
+  },
+  expandButton: {
+    fontSize: 14,
+    color: "#666666",
   },
   bulletPoints: {
     paddingLeft: 8,
