@@ -46,6 +46,7 @@ export interface Meal {
   protein: number;
   scanned: boolean;
   created_at: string;
+  id?: number;
 }
 
 interface StreakData {
@@ -277,13 +278,17 @@ export default function Index() {
   const handleUpload = async (photo: ImagePicker.ImagePickerAsset) => {
     setIsScanning(true);
     // Add temporary loading state to meals
-    const tempId = DateTime.now().toMillis(); // Create unique ID for the loading state
+    const tempId = DateTime.now().toMillis();
+
+    // Add artificial delay for consistency
+    await new Promise((resolve) => setTimeout(resolve, 500));
+
     setMeals((prev) => [
       {
         name: "",
         protein: 0,
         scanned: false,
-        id: tempId, // Add temporary ID to identify this loading state
+        id: tempId,
         created_at: DateTime.now().toUTC().toISO(),
       },
       ...prev,
@@ -291,6 +296,10 @@ export default function Index() {
 
     try {
       if (!photo?.base64) return;
+
+      // Add minimum loading time for consistency
+      const uploadStartTime = Date.now();
+
       const { data, error } = await supabase.storage
         .from("temp")
         .upload(
@@ -315,6 +324,12 @@ export default function Index() {
             createdAt: DateTime.now().toUTC().toISO(),
           },
         });
+
+      // Ensure minimum loading time of 1.5 seconds
+      const elapsedTime = Date.now() - uploadStartTime;
+      if (elapsedTime < 1500) {
+        await new Promise((resolve) => setTimeout(resolve, 1500 - elapsedTime));
+      }
 
       if (scanError) {
         console.error(scanError);
@@ -387,9 +402,10 @@ export default function Index() {
               right: 0,
               bottom: 0,
               opacity: menuAnimation,
-              zIndex: 0,
+              zIndex: 1,
             },
           ]}
+          pointerEvents={isFabExpanded ? "auto" : "none"}
         >
           <BlurView
             intensity={10}
@@ -398,7 +414,7 @@ export default function Index() {
           />
         </Animated.View>
       )}
-      <View style={[styles.fabContainer, { zIndex: 2 }]}>
+      <View style={[styles.fabContainer]} pointerEvents="box-none">
         <Animated.View
           style={[
             styles.fabMenu,
@@ -420,6 +436,7 @@ export default function Index() {
               ],
             },
           ]}
+          pointerEvents={isFabExpanded ? "auto" : "none"}
         >
           {[
             {
@@ -597,6 +614,7 @@ const styles = StyleSheet.create({
   scrollView: {
     flex: 1,
     padding: 20,
+    zIndex: 0,
   },
   background: {
     ...StyleSheet.absoluteFillObject,
@@ -728,9 +746,11 @@ const styles = StyleSheet.create({
   },
   fabContainer: {
     position: "absolute",
-    right: 20,
     bottom: 20,
+    right: 20,
     alignItems: "flex-end",
+    pointerEvents: "box-none",
+    zIndex: 2,
   },
   fabMenu: {
     marginBottom: 16,
