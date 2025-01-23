@@ -22,7 +22,12 @@ export default function Account() {
         {
           text: "Log Out",
           onPress: async () => {
-            await signOut();
+            try {
+              await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              await signOut();
+            } catch (error) {
+              console.error("Error signing out:", error);
+            }
             // The AuthProvider will handle the redirect to /welcome
           },
         },
