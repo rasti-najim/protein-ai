@@ -9,6 +9,7 @@ import supabase from "@/lib/supabase";
 import { useRouter } from "expo-router";
 import * as Haptics from "expo-haptics";
 import { useAuth } from "./auth-context";
+import { usePostHog } from "posthog-react-native";
 
 export const OnboardingLoading = ({
   onboardingData,
@@ -19,6 +20,7 @@ export const OnboardingLoading = ({
   const rotateAnim = useRef(new Animated.Value(0)).current;
   const router = useRouter();
   const { user } = useAuth();
+  const posthog = usePostHog();
 
   useEffect(() => {
     const pulse = Animated.sequence([
@@ -67,6 +69,16 @@ export const OnboardingLoading = ({
 
       console.log("Onboarding data saved successfully", data);
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      posthog.identify(user?.id, {
+        email: onboardingData.email,
+        gender: onboardingData.gender,
+        target_weight: onboardingData.targetWeight,
+        target_weight_unit: onboardingData.targetWeightUnit,
+        exercise_frequency: onboardingData.exerciseFrequency,
+        goal: onboardingData.goal,
+        daily_protein_target: onboardingData.dailyProteinGoal,
+      });
+      posthog.capture("user_onboarded");
       router.replace("/home");
     } catch (error) {
       console.error(error);

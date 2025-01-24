@@ -40,6 +40,7 @@ import Superwall from "@superwall/react-native-superwall";
 import ReanimatedSwipeable from "react-native-gesture-handler/ReanimatedSwipeable";
 import Reanimated, { SharedValue } from "react-native-reanimated";
 import { useAnimatedStyle } from "react-native-reanimated";
+import { usePostHog } from "posthog-react-native";
 
 export interface Meal {
   name: string;
@@ -59,6 +60,7 @@ interface StreakData {
 
 export default function Index() {
   const { user } = useAuth();
+  const posthog = usePostHog();
   const [isBottomSheetVisible, setIsBottomSheetVisible] = useState(false);
   const [isFabExpanded, setIsFabExpanded] = useState(false);
   const menuAnimation = useRef(new Animated.Value(0)).current;
@@ -220,6 +222,7 @@ export default function Index() {
 
   const handleBadgePress = useCallback(async () => {
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    posthog.capture("user_viewed_streak");
     router.push({
       pathname: "/home/streak",
       params: {
@@ -269,6 +272,7 @@ export default function Index() {
       });
 
       if (!result.canceled) {
+        posthog.capture("user_uploaded_meal");
         // Navigate to upload screen with the selected image
         await handleUpload(result.assets[0]);
       }
@@ -361,10 +365,15 @@ export default function Index() {
 
       // Update current protein intake
       setCurrentProtein((prev) => prev + scanData.protein_g);
+      posthog.capture("meal_scanned", {
+        meal_name: scanData.meal_name,
+        protein_amount: scanData.protein_g,
+      });
     } catch (error) {
       console.error(error);
       // Remove the loading skeleton in case of error
       setMeals((prev) => prev.filter((meal) => meal.id !== tempId));
+      posthog.capture("meal_scan_failed");
     } finally {
       setIsScanning(false);
     }

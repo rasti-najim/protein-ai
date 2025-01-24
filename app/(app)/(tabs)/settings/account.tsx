@@ -5,11 +5,12 @@ import * as Haptics from "expo-haptics";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import { Button } from "@/components/button";
+import { usePostHog } from "posthog-react-native";
 
 export default function Account() {
   const { signOut, deleteAccount } = useAuth();
   const router = useRouter();
-
+  const posthog = usePostHog();
   const handleLogout = async () => {
     try {
       await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -25,6 +26,8 @@ export default function Account() {
             try {
               await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
               await signOut();
+              posthog.capture("user_logged_out");
+              posthog.reset();
             } catch (error) {
               console.error("Error signing out:", error);
             }
@@ -54,6 +57,8 @@ export default function Account() {
             style: "destructive",
             onPress: async () => {
               await deleteAccount();
+              posthog.capture("user_deleted_account");
+              posthog.reset();
               // The AuthProvider will handle the redirect to /welcome after deletion
             },
           },

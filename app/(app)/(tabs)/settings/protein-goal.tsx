@@ -16,6 +16,7 @@ import { useAuth } from "@/components/auth-context";
 import supabase from "@/lib/supabase";
 import * as Haptics from "expo-haptics";
 import { Image } from "expo-image";
+import { usePostHog } from "posthog-react-native";
 
 interface UserData {
   daily_protein_target: number;
@@ -27,6 +28,7 @@ interface UserData {
 export default function ModifyProteinGoal() {
   const { user } = useAuth();
   const router = useRouter();
+  const posthog = usePostHog();
   const [proteinGoal, setProteinGoal] = useState("");
   const [currentGoal, setCurrentGoal] = useState<number>(0);
   const [userData, setUserData] = useState<UserData | null>(null);
@@ -82,6 +84,11 @@ export default function ModifyProteinGoal() {
         .from("users")
         .update({ daily_protein_target: newGoal })
         .eq("id", user?.id);
+
+      posthog.capture("user_updated_protein_goal", {
+        old_goal: currentGoal,
+        new_goal: newGoal,
+      });
 
       router.back();
     } catch (error) {

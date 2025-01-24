@@ -8,6 +8,7 @@ import { useRouter } from "expo-router";
 import { usePhoto } from "@/components/photo-context";
 import { Button } from "@/components/button";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { usePostHog } from "posthog-react-native";
 
 export default function Page() {
   const insets = useSafeAreaInsets();
@@ -16,7 +17,7 @@ export default function Page() {
   const cameraRef = useRef<CameraView>(null);
   const router = useRouter();
   const { setPhoto } = usePhoto();
-
+  const posthog = usePostHog();
   const handleCapture = async () => {
     if (!cameraRef.current) return;
 
@@ -29,6 +30,7 @@ export default function Page() {
       if (!photo) return;
       console.log(photo);
       setPhoto(photo);
+      posthog.capture("user_scanned_meal");
       router.dismiss();
     } catch (error) {
       console.error("Error capturing photo", error);
