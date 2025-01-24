@@ -40,12 +40,14 @@ import Superwall from "@superwall/react-native-superwall";
 import ReanimatedSwipeable from "react-native-gesture-handler/ReanimatedSwipeable";
 import Reanimated, { SharedValue } from "react-native-reanimated";
 import { useAnimatedStyle } from "react-native-reanimated";
+import { usePostHog } from "posthog-react-native";
 
 export interface Meal {
   name: string;
   protein: number;
   scanned: boolean;
   created_at: string;
+  id?: number;
 }
 
 interface StreakData {
@@ -58,6 +60,7 @@ interface StreakData {
 
 export default function Index() {
   const { user } = useAuth();
+  const posthog = usePostHog();
   const [isBottomSheetVisible, setIsBottomSheetVisible] = useState(false);
   const [isFabExpanded, setIsFabExpanded] = useState(false);
   const menuAnimation = useRef(new Animated.Value(0)).current;
@@ -219,6 +222,7 @@ export default function Index() {
 
   const handleBadgePress = useCallback(async () => {
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    posthog.capture("user_viewed_streak");
     router.push({
       pathname: "/home/streak",
       params: {
@@ -268,6 +272,7 @@ export default function Index() {
       });
 
       if (!result.canceled) {
+        posthog.capture("user_uploaded_meal");
         // Navigate to upload screen with the selected image
         await handleUpload(result.assets[0]);
       }
@@ -277,13 +282,17 @@ export default function Index() {
   const handleUpload = async (photo: ImagePicker.ImagePickerAsset) => {
     setIsScanning(true);
     // Add temporary loading state to meals
-    const tempId = DateTime.now().toMillis(); // Create unique ID for the loading state
+    const tempId = DateTime.now().toMillis();
+
+    // Add artificial delay for consistency
+    await new Promise((resolve) => setTimeout(resolve, 500));
+
     setMeals((prev) => [
       {
         name: "",
         protein: 0,
         scanned: false,
-        id: tempId, // Add temporary ID to identify this loading state
+        id: tempId,
         created_at: DateTime.now().toUTC().toISO(),
       },
       ...prev,
@@ -291,6 +300,10 @@ export default function Index() {
 
     try {
       if (!photo?.base64) return;
+
+      // Add minimum loading time for consistency
+      const uploadStartTime = Date.now();
+
       const { data, error } = await supabase.storage
         .from("temp")
         .upload(
@@ -315,6 +328,12 @@ export default function Index() {
             createdAt: DateTime.now().toUTC().toISO(),
           },
         });
+
+      // Ensure minimum loading time of 1.5 seconds
+      const elapsedTime = Date.now() - uploadStartTime;
+      if (elapsedTime < 1500) {
+        await new Promise((resolve) => setTimeout(resolve, 1500 - elapsedTime));
+      }
 
       if (scanError) {
         console.error(scanError);
@@ -346,10 +365,15 @@ export default function Index() {
 
       // Update current protein intake
       setCurrentProtein((prev) => prev + scanData.protein_g);
+      posthog.capture("meal_scanned", {
+        meal_name: scanData.meal_name,
+        protein_amount: scanData.protein_g,
+      });
     } catch (error) {
       console.error(error);
       // Remove the loading skeleton in case of error
       setMeals((prev) => prev.filter((meal) => meal.id !== tempId));
+      posthog.capture("meal_scan_failed");
     } finally {
       setIsScanning(false);
     }
@@ -387,9 +411,10 @@ export default function Index() {
               right: 0,
               bottom: 0,
               opacity: menuAnimation,
-              zIndex: 0,
+              zIndex: 1,
             },
           ]}
+          pointerEvents={isFabExpanded ? "auto" : "none"}
         >
           <BlurView
             intensity={10}
@@ -398,7 +423,7 @@ export default function Index() {
           />
         </Animated.View>
       )}
-      <View style={[styles.fabContainer, { zIndex: 2 }]}>
+      <View style={[styles.fabContainer]} pointerEvents="box-none">
         <Animated.View
           style={[
             styles.fabMenu,
@@ -420,6 +445,7 @@ export default function Index() {
               ],
             },
           ]}
+          pointerEvents={isFabExpanded ? "auto" : "none"}
         >
           {[
             {
@@ -597,6 +623,7 @@ const styles = StyleSheet.create({
   scrollView: {
     flex: 1,
     padding: 20,
+    zIndex: 0,
   },
   background: {
     ...StyleSheet.absoluteFillObject,
@@ -728,9 +755,11 @@ const styles = StyleSheet.create({
   },
   fabContainer: {
     position: "absolute",
-    right: 20,
     bottom: 20,
+    right: 20,
     alignItems: "flex-end",
+    pointerEvents: "box-none",
+    zIndex: 2,
   },
   fabMenu: {
     marginBottom: 16,

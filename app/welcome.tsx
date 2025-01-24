@@ -22,12 +22,14 @@ import Animated, {
   useSharedValue,
   Easing,
 } from "react-native-reanimated";
+import { usePostHog } from "posthog-react-native";
 
 const width = Dimensions.get("window").width;
 const height = Dimensions.get("window").height;
 
 export default function Page() {
   const router = useRouter();
+  const posthog = usePostHog();
   const [currentStep, setCurrentStep] = useState(0);
 
   const scrollViewRef = useRef<ScrollView>(null);
@@ -132,6 +134,7 @@ export default function Page() {
               style={[styles.button]}
               onPress={async () => {
                 await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                posthog.capture("onboarding_started");
                 router.push("/onboarding");
               }}
             >

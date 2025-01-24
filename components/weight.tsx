@@ -83,7 +83,10 @@ export const Weight = ({ onSelect }: WeightProps) => {
           },
         ]}
       >
-        <Text style={styles.title}>Weight</Text>
+        <Text style={styles.title}>Target Weight</Text>
+        <Text style={styles.subtitle}>
+          Set a realistic goal for your fitness journey
+        </Text>
 
         <View style={styles.unitSelector}>
           <TouchableOpacity
@@ -154,7 +157,7 @@ const styles = StyleSheet.create({
     fontSize: 42,
     fontFamily: "Platypi",
     color: "#2A2A2A",
-    marginBottom: 32,
+    marginBottom: "5%",
   },
   unitSelector: {
     flexDirection: "row",
@@ -229,5 +232,11 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
+  },
+  subtitle: {
+    fontSize: 16,
+    fontFamily: "Platypi",
+    color: "#9E9E9E",
+    marginBottom: "5%",
   },
 });

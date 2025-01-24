@@ -11,6 +11,7 @@ import CreateAccount from "../components/create-account";
 import { OnboardingLoading } from "@/components/onboarding-loading";
 import { Goal } from "@/components/goal";
 import Superwall from "@superwall/react-native-superwall";
+import { usePostHog } from "posthog-react-native";
 
 export interface OnboardingData {
   gender: "male" | "female" | "other" | null;
@@ -26,6 +27,7 @@ export interface OnboardingData {
 }
 
 export default function Onboarding() {
+  const posthog = usePostHog();
   const [currentStep, setCurrentStep] = useState<number>(0);
   const totalSteps = 8;
   const [data, setData] = useState<OnboardingData>({
@@ -43,10 +45,12 @@ export default function Onboarding() {
 
   const handleExerciseSelect = (selected: "0-2" | "3-4" | "5+") => {
     setData((prev) => ({ ...prev, exerciseFrequency: selected }));
+    posthog.capture("onboarding_exercise_selected", { exercise: selected });
   };
 
   const handleGenderSelect = (selected: "male" | "female" | "other") => {
     setData((prev) => ({ ...prev, gender: selected }));
+    posthog.capture("onboarding_gender_selected", { gender: selected });
   };
 
   const handleWeightSelect = (selected: number, unit: "lbs" | "kg") => {
@@ -55,26 +59,33 @@ export default function Onboarding() {
       targetWeight: selected,
       targetWeightUnit: unit,
     }));
+    posthog.capture("onboarding_weight_selected", {
+      weight: selected,
+      unit: unit,
+    });
   };
 
   const handleGoalSelect = (selected: "lose" | "gain" | "maintain") => {
     setData((prev) => ({ ...prev, goal: selected }));
+    posthog.capture("onboarding_goal_selected", { goal: selected });
   };
 
   const handleProteinGoalSelect = (proteinGoal: number) => {
     setData((prev) => ({ ...prev, dailyProteinGoal: proteinGoal }));
+    posthog.capture("onboarding_protein_goal", { proteinGoal: proteinGoal });
   };
 
   const handleNext = async () => {
     if (currentStep < totalSteps - 1) {
       await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Soft);
 
-      // if (currentStep === 5) {
-      //   Superwall.shared.register("onboarding").then((result) => {
-      //     setCurrentStep(currentStep + 1);
-      //     return;
-      //   });
-      // }
+      if (currentStep === 5) {
+        Superwall.shared.register("onboarding").then((result) => {
+          posthog.capture("user_subscribed");
+          setCurrentStep(currentStep + 1);
+          return;
+        });
+      }
 
       setCurrentStep(currentStep + 1);
     } else {
@@ -147,6 +158,9 @@ export default function Onboarding() {
                 email: user.email ?? null,
                 hasAccount: true,
               }));
+              posthog.capture("user_signed_up", {
+                login_method: "google",
+              });
               await handleNext();
             }}
             onAppleSignIn={async (user) => {
@@ -156,6 +170,9 @@ export default function Onboarding() {
                 email: user.email ?? null,
                 hasAccount: true,
               }));
+              posthog.capture("user_signed_up", {
+                login_method: "apple",
+              });
               await handleNext();
             }}
           />

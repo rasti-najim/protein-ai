@@ -16,12 +16,13 @@ import supabase from "@/lib/supabase";
 import { useAuth } from "@/components/auth-context";
 import { DateTime } from "luxon";
 import { Button } from "@/components/button";
+import { usePostHog } from "posthog-react-native";
 export default function Manual() {
   const { user } = useAuth();
   const [mealName, setMealName] = useState("");
   const [proteinAmount, setProteinAmount] = useState("");
   const router = useRouter();
-
+  const posthog = usePostHog();
   const handleSave = async () => {
     // TODO: Save the meal
     try {
@@ -30,6 +31,10 @@ export default function Manual() {
         protein_amount: Number(proteinAmount),
         user_id: user?.id!,
         created_at: DateTime.now().toISO(),
+      });
+      posthog.capture("user_entered_manually", {
+        meal_name: mealName,
+        protein_amount: Number(proteinAmount),
       });
       router.dismiss();
     } catch (error) {
