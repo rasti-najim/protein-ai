@@ -87,6 +87,7 @@ export default function Index() {
     streak_emoji: "",
     days_to_next_level: 0,
   });
+  const progressPulseAnim = useRef(new Animated.Value(1)).current;
 
   const checkIfWeShouldResetGoalMessage = async () => {
     try {
@@ -99,9 +100,9 @@ export default function Index() {
         await AsyncStorage.setItem("goalMessageDate", today);
         await AsyncStorage.setItem("hasShownGoalReached", "false");
       } else {
-        // Same day, so retrieve whether message was shown
+        // Same day, so don't show the message if it was already shown
         const seenMsg = await AsyncStorage.getItem("hasShownGoalReached");
-        setShowGoalReached(seenMsg === "true");
+        setShowGoalReached(false);
       }
     } catch (e) {
       console.error("Failed to check or reset goal message status", e);
@@ -195,13 +196,50 @@ export default function Index() {
 
       if (
         currentProtein >= dailyGoal &&
-        (seenMsg !== "true" || storedDate !== today)
+        currentProtein > 0 &&
+        seenMsg !== "true" &&
+        storedDate === today
       ) {
+        // Haptic feedback for goal completion
+        await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        
+        // Progress circle celebration animation
+        Animated.sequence([
+          Animated.timing(progressPulseAnim, {
+            toValue: 1.1,
+            duration: 200,
+            useNativeDriver: true,
+          }),
+          Animated.timing(progressPulseAnim, {
+            toValue: 1,
+            duration: 200,
+            useNativeDriver: true,
+          }),
+          Animated.timing(progressPulseAnim, {
+            toValue: 1.05,
+            duration: 150,
+            useNativeDriver: true,
+          }),
+          Animated.timing(progressPulseAnim, {
+            toValue: 1,
+            duration: 150,
+            useNativeDriver: true,
+          }),
+        ]).start();
+        
         setShowGoalReached(true);
         await AsyncStorage.setItem("hasShownGoalReached", "true");
         await AsyncStorage.setItem("goalMessageDate", today);
+        
         // Fetch updated streak data
         await fetchStreak();
+        
+        // Analytics tracking
+        posthog.capture("daily_protein_goal_reached", {
+          protein_amount: currentProtein,
+          goal_amount: dailyGoal,
+          excess_protein: currentProtein - dailyGoal,
+        });
       }
     };
     checkGoalReached();
@@ -553,7 +591,14 @@ export default function Index() {
           />
         </View>
 
-        <View style={styles.progressContainer}>
+        <Animated.View 
+          style={[
+            styles.progressContainer,
+            {
+              transform: [{ scale: progressPulseAnim }],
+            },
+          ]}
+        >
           <CircularProgress
             progress={progress}
             size={200}
@@ -567,7 +612,7 @@ export default function Index() {
               <Text style={styles.progressLabel}>protein</Text>
             </View>
           </CircularProgress>
-        </View>
+        </Animated.View>
 
         <Text style={styles.sectionTitle}>Meals</Text>
         <View style={styles.mealsList}>
@@ -608,14 +653,14 @@ export default function Index() {
 
       {renderFloatingButton()}
 
-      {/* {showGoalReached && (
+      {showGoalReached && (
         <GoalReached
           onClose={() => {
             setShowGoalReached(false);
             setHasShownGoalReached(true);
           }}
         />
-      )} */}
+      )}
     </SafeAreaView>
   );
 }
