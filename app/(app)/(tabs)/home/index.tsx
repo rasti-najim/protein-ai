@@ -33,6 +33,7 @@ import { DateTime } from "luxon";
 import { useAuth } from "@/components/auth-context";
 import { MealSkeleton } from "@/components/meals-skeleton";
 import { GoalReached } from "@/components/goal-reached";
+import { MealDetails, type MealDetailsData } from "@/components/meal-details";
 import * as StoreReview from "expo-store-review";
 import { usePhoto } from "@/components/photo-context";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -44,11 +45,11 @@ import { useAnimatedStyle } from "react-native-reanimated";
 import { usePostHog } from "posthog-react-native";
 
 export interface Meal {
+  id?: number;
   name: string;
   protein: number;
   scanned: boolean;
   created_at: string;
-  id?: number;
 }
 
 interface StreakData {
@@ -80,6 +81,8 @@ export default function Index() {
   const [isScanning, setIsScanning] = useState(false);
   const [showGoalReached, setShowGoalReached] = useState(false);
   const [hasShownGoalReached, setHasShownGoalReached] = useState(false);
+  const [selectedMeal, setSelectedMeal] = useState<MealDetailsData | null>(null);
+  const [showMealDetails, setShowMealDetails] = useState(false);
   const { photo: scannedPhoto } = usePhoto();
   const [streak, setStreak] = useState<StreakData>({
     current_streak: 0,
@@ -239,6 +242,7 @@ export default function Index() {
           // Set meals data
           setMeals(
             data.map((meal) => ({
+              id: meal.id,
               name: meal.name,
               protein: meal.protein_amount,
               scanned: true,
@@ -500,6 +504,8 @@ export default function Index() {
       posthog.capture("meal_scanned", {
         meal_name: scanData.meal_name,
         protein_amount: scanData.protein_g,
+        current_streak: scanData.currentStreak,
+        streak_extended: scanData.streakExtended,
       });
     } catch (error) {
       console.error(error);
@@ -529,6 +535,89 @@ export default function Index() {
       router.push("/home/camera");
     });
     toggleMenu();
+  };
+
+  const handleMealPress = async (meal: Meal) => {
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setSelectedMeal({
+      id: meal.id,
+      name: meal.name,
+      protein: meal.protein,
+      scanned: meal.scanned,
+      created_at: meal.created_at,
+    });
+    setShowMealDetails(true);
+  };
+
+  const handleMealUpdated = (updatedMeal: MealDetailsData) => {
+    setMeals(prevMeals => 
+      prevMeals.map(meal => 
+        meal.id === updatedMeal.id 
+          ? { ...meal, name: updatedMeal.name, protein: updatedMeal.protein }
+          : meal
+      )
+    );
+    
+    // Update current protein total
+    const proteinDifference = updatedMeal.protein - (selectedMeal?.protein || 0);
+    setCurrentProtein(prev => prev + proteinDifference);
+    
+    // Update selected meal for the modal
+    setSelectedMeal(updatedMeal);
+  };
+
+  const handleDeleteMeal = async (meal: MealDetailsData) => {
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+    
+    Alert.alert(
+      "Delete Meal",
+      `Are you sure you want to delete "${meal.name}"? This action cannot be undone.`,
+      [
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              if (meal.id) {
+                const { error } = await supabase
+                  .from("meals")
+                  .delete()
+                  .eq("id", meal.id);
+
+                if (error) {
+                  console.error("Error deleting meal:", error);
+                  Alert.alert("Error", "Failed to delete meal. Please try again.");
+                  return;
+                }
+
+                // Update local state
+                setMeals((prev) => prev.filter((m) => m.id !== meal.id));
+                setCurrentProtein((prev) => prev - meal.protein);
+                
+                // Close modal
+                setShowMealDetails(false);
+                setSelectedMeal(null);
+
+                // Analytics
+                posthog.capture("meal_deleted", {
+                  meal_name: meal.name,
+                  protein_amount: meal.protein,
+                });
+
+                await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+              }
+            } catch (error) {
+              console.error("Error deleting meal:", error);
+              Alert.alert("Error", "Failed to delete meal. Please try again.");
+            }
+          },
+        },
+      ]
+    );
   };
 
   const renderFloatingButton = () => (
@@ -767,7 +856,12 @@ export default function Index() {
                 return <MealSkeleton key={index} showCalculating={true} />;
               }
               return (
-                <View key={index} style={styles.mealItem}>
+                <TouchableOpacity 
+                  key={index} 
+                  style={styles.mealItem}
+                  onPress={() => handleMealPress(meal)}
+                  activeOpacity={0.7}
+                >
                   <View style={styles.mealInfo}>
                     <Text
                       style={styles.mealName}
@@ -780,12 +874,14 @@ export default function Index() {
                       <Text style={styles.mealProtein}>{meal.protein}g</Text>
                     </View>
                   </View>
-                  {meal.created_at && (
-                    <Text style={styles.mealTime}>
-                      {DateTime.fromISO(meal.created_at).toFormat("h:mm a")}
-                    </Text>
-                  )}
-                </View>
+                  <View style={styles.mealMeta}>
+                    {meal.created_at && (
+                      <Text style={styles.mealTime}>
+                        {DateTime.fromISO(meal.created_at).toFormat("h:mm a")}
+                      </Text>
+                    )}
+                  </View>
+                </TouchableOpacity>
               );
             })
           )}
@@ -802,6 +898,17 @@ export default function Index() {
           }}
         />
       )}
+
+      <MealDetails
+        meal={selectedMeal}
+        visible={showMealDetails}
+        onClose={() => {
+          setShowMealDetails(false);
+          setSelectedMeal(null);
+        }}
+        onDelete={handleDeleteMeal}
+        onMealUpdated={handleMealUpdated}
+      />
 
     </SafeAreaView>
   );
@@ -924,6 +1031,11 @@ const styles = StyleSheet.create({
     fontFamily: "Platypi",
     color: "#FCE9BC",
     fontWeight: "600",
+  },
+  mealMeta: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
   },
   mealTime: {
     fontSize: 16,
