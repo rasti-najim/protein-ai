@@ -531,15 +531,19 @@ export default function Index() {
           <Text style={styles.title}>Protein AI</Text>
           <Pressable onPress={handleBadgePress}>
             <View style={styles.badge}>
-              <Text style={styles.badgeNumber}>
-                {streak.current_streak} {streak.streak_emoji}
-              </Text>
+              <Text style={styles.badgeNumber}>{streak.current_streak} 🔥</Text>
             </View>
           </Pressable>
         </View>
 
         <View style={styles.todayContainer}>
           <Text style={styles.sectionTitle}>Today</Text>
+          <FontAwesome6
+            name="fire"
+            size={20}
+            color="#FF6B35"
+            style={styles.streakIcon}
+          />
           <FontAwesome6
             name="bolt"
             size={16}
@@ -665,6 +669,9 @@ const styles = StyleSheet.create({
     fontFamily: "Platypi",
     color: "#2A2A2A",
     marginBottom: 16,
+  },
+  streakIcon: {
+    marginBottom: 8,
   },
   lightningIcon: {
     marginBottom: 8,

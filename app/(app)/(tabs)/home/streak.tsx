@@ -10,9 +10,8 @@ export default function Page() {
 
   return (
     <Streak
-      name={streakData.streak_name}
-      emoji={streakData.streak_emoji}
       currentStreak={streakData.current_streak}
+      maxStreak={streakData.max_streak}
       daysToNextLevel={streakData.days_to_next_level}
       onClose={() => {
         router.back();
