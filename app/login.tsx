@@ -53,7 +53,7 @@ export default function Login() {
         });
 
         if (!error && user) {
-          router.replace("/home");
+          router.replace("/(app)/(tabs)/home");
         }
       }
     } catch (error: any) {
@@ -119,7 +119,7 @@ export default function Login() {
         console.log("Sign in result:", { user, error });
 
         if (!error && user) {
-          router.replace("/home");
+          router.replace("/(app)/(tabs)/home");
         }
       }
     } catch (error: any) {

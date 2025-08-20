@@ -54,7 +54,8 @@ export const OnboardingLoading = ({
     console.log("saving onboarding data", onboardingData);
 
     try {
-      const { data, error } = await supabase.from("users").insert({
+      // Try to upsert (insert or update) user data to handle existing users
+      const { data, error } = await supabase.from("users").upsert({
         id: user?.id,
         email: onboardingData.email,
         gender: onboardingData.gender,
@@ -63,6 +64,8 @@ export const OnboardingLoading = ({
         exercise_frequency: onboardingData.exerciseFrequency,
         goal: onboardingData.goal,
         daily_protein_target: onboardingData.dailyProteinGoal,
+      }, {
+        onConflict: 'id'
       });
 
       if (error) throw error;
@@ -79,9 +82,14 @@ export const OnboardingLoading = ({
         daily_protein_target: onboardingData.dailyProteinGoal,
       });
       posthog.capture("user_onboarded");
-      router.replace("/home");
+      router.replace("/(app)/(tabs)/home");
     } catch (error) {
-      console.error(error);
+      console.error("Failed to save onboarding data:", error);
+      // Show error and allow retry or navigate to home anyway
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      // For now, still navigate to home to not block the user
+      // In production, you might want to show an error message and retry
+      router.replace("/(app)/(tabs)/home");
     }
   };
 

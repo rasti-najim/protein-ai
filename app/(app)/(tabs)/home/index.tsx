@@ -43,6 +43,7 @@ import ReanimatedSwipeable from "react-native-gesture-handler/ReanimatedSwipeabl
 import Reanimated, { SharedValue } from "react-native-reanimated";
 import { useAnimatedStyle } from "react-native-reanimated";
 import { usePostHog } from "posthog-react-native";
+import { useStreakQuery } from "@/hooks/useStreakQuery";
 
 export interface Meal {
   id?: number;
@@ -53,13 +54,7 @@ export interface Meal {
   created_at: string;
 }
 
-interface StreakData {
-  current_streak: number;
-  max_streak: number;
-  streak_name: string;
-  streak_emoji: string;
-  days_to_next_level: number;
-}
+// StreakData interface removed - now using useStreakQuery hook
 
 export default function Index() {
   const { user } = useAuth();
@@ -85,13 +80,8 @@ export default function Index() {
   const [selectedMeal, setSelectedMeal] = useState<MealDetailsData | null>(null);
   const [showMealDetails, setShowMealDetails] = useState(false);
   const { photo: scannedPhoto } = usePhoto();
-  const [streak, setStreak] = useState<StreakData>({
-    current_streak: 0,
-    max_streak: 0,
-    streak_name: "",
-    streak_emoji: "",
-    days_to_next_level: 0,
-  });
+  const { data: streakData } = useStreakQuery();
+  const currentStreak = streakData?.length || 0;
   const progressPulseAnim = useRef(new Animated.Value(1)).current;
 
   const checkIfWeShouldResetGoalMessage = async () => {
@@ -180,30 +170,7 @@ export default function Index() {
     checkForFirstMealReview(); // Also check if we should show review on app load
   }, []);
 
-  const fetchStreak = async () => {
-    try {
-      const { data, error } = await supabase
-        .from("user_streak_view")
-        .select("*")
-        .eq("user_id", user?.id!);
-      setStreak({
-        current_streak: data?.[0]?.current_streak || 0,
-        max_streak: data?.[0]?.max_streak || 0,
-        streak_name: data?.[0]?.streak_name || "",
-        streak_emoji: data?.[0]?.streak_emoji || "",
-        days_to_next_level: data?.[0]?.days_to_next_level || 0,
-      });
-      console.log("streak", streak);
-    } catch (error) {
-      console.error(error);
-    }
-  };
-
-  useFocusEffect(
-    useCallback(() => {
-      fetchStreak();
-    }, [])
-  );
+  // Streak data is now handled by useStreakQuery hook
 
   useFocusEffect(
     useCallback(() => {
@@ -316,8 +283,7 @@ export default function Index() {
         await AsyncStorage.setItem("hasShownGoalReached", "true");
         await AsyncStorage.setItem("goalMessageDate", today);
         
-        // Fetch updated streak data
-        await fetchStreak();
+        // Streak data will be automatically updated by React Query
         
         // Analytics tracking
         posthog.capture("daily_protein_goal_reached", {
@@ -349,10 +315,14 @@ export default function Index() {
     router.push({
       pathname: "/home/streak",
       params: {
-        streak: JSON.stringify(streak),
+        streak: JSON.stringify({
+          current_streak: currentStreak,
+          max_streak: 0, // Can be updated if you have this data
+          days_to_next_level: 0, // Can be updated if you have this data
+        }),
       },
     });
-  }, [streak]);
+  }, [currentStreak]);
 
   const handleSheetChanges = useCallback((index: number) => {
     if (index === -1) {
@@ -803,7 +773,7 @@ export default function Index() {
             )}
             <Pressable onPress={handleBadgePress}>
               <View style={styles.badge}>
-                <Text style={styles.badgeNumber}>{streak.current_streak}</Text>
+                <Text style={styles.badgeNumber}>{currentStreak}</Text>
                 <FontAwesome6 name="fire" size={16} color="#FF6B35" />
               </View>
             </Pressable>

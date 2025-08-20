@@ -117,7 +117,7 @@ export default function Page() {
             pagingEnabled
             showsHorizontalScrollIndicator={false}
             scrollEventThrottle={16}
-            // onMomentumScrollEnd={handleScroll}
+            onMomentumScrollEnd={handleScroll}
           >
             {onboardingSteps.map((step, index) => (
               <View key={index} style={[styles.modalContent, { width: width }]}>

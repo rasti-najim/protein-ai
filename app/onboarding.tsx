@@ -85,13 +85,13 @@ export default function Onboarding() {
           setCurrentStep(currentStep + 1);
           return;
         });
+        return; // Important: return here to prevent double step increment
       }
 
       setCurrentStep(currentStep + 1);
-    } else {
-      console.log("saving onboarding data: ", data);
-      router.push("/home");
     }
+    // Note: When currentStep === totalSteps - 1, we're on the loading screen
+    // The OnboardingLoading component handles data saving and navigation
   };
 
   const handleBack = () => {

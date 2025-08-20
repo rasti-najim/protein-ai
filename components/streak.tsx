@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useEffect, useState } from "react";
 import { View, Text, StyleSheet, Dimensions } from "react-native";
 import { Button } from "@/components/button";
 import { Image } from "expo-image";
@@ -6,6 +6,8 @@ import { DateTime } from "luxon";
 import { FontAwesome6 } from "@expo/vector-icons";
 import Animated, { FadeInUp, FadeInDown } from "react-native-reanimated";
 import { useStreakQuery } from "@/hooks/useStreakQuery";
+import supabase from "@/lib/supabase";
+import { useAuth } from "@/components/auth-context";
 
 interface StreakProps {
   currentStreak: number;
@@ -23,8 +25,46 @@ export const Streak = ({
   onClose,
 }: StreakProps) => {
   const { data: streakData, isLoading, error } = useStreakQuery();
+  const { user } = useAuth();
+  const [todayProgress, setTodayProgress] = useState<{ current: number; goal: number } | null>(null);
 
   const dayLabels = useMemo(() => ["S", "M", "T", "W", "T", "F", "S"], []);
+
+  // Fetch today's protein progress to check if goal was hit
+  useEffect(() => {
+    const fetchTodayProgress = async () => {
+      if (!user?.id) return;
+
+      try {
+        const today = DateTime.now().startOf("day").toISO();
+
+        // Get today's meals and daily goal
+        const [mealsResult, userResult] = await Promise.all([
+          supabase
+            .from("meals")
+            .select("protein_amount")
+            .eq("user_id", user.id)
+            .gte("created_at", today),
+          supabase
+            .from("users")
+            .select("daily_protein_target")
+            .eq("id", user.id)
+            .single()
+        ]);
+
+        if (mealsResult.data && userResult.data) {
+          const currentProtein = mealsResult.data.reduce((sum, meal) => sum + (meal.protein_amount || 0), 0);
+          const dailyGoal = userResult.data.daily_protein_target || 200;
+          
+          setTodayProgress({ current: currentProtein, goal: dailyGoal });
+        }
+      } catch (error) {
+        console.error("Failed to fetch today's progress:", error);
+      }
+    };
+
+    fetchTodayProgress();
+  }, [user?.id]);
 
   // Use the current streak from real data
   const computedStreak = useMemo(() => {
@@ -122,6 +162,12 @@ export const Streak = ({
           <View style={styles.weekRow}>
             {streakData?.dailyBreakdown.map((d, idx) => {
               const isToday = idx === (streakData?.dailyBreakdown.length || 0) - 1;
+              
+              // For today, use real-time progress if available
+              const hitGoal = isToday && todayProgress 
+                ? todayProgress.current >= todayProgress.goal 
+                : d.hitGoal;
+              
               const delay = 700 + idx * 100; // Staggered animation
               return (
                 <Animated.View
@@ -132,14 +178,14 @@ export const Streak = ({
                   <Animated.View
                     style={[
                       styles.dayCircle,
-                      d.hitGoal ? styles.dayHit : styles.dayMiss,
+                      hitGoal ? styles.dayHit : styles.dayMiss,
                       isToday && styles.todayCircle,
                     ]}
                   >
-                    {d.hitGoal && (
+                    {hitGoal && (
                       <FontAwesome6 name="check" size={14} color="#FFFFFF" />
                     )}
-                    {!d.hitGoal && !isToday && (
+                    {!hitGoal && !isToday && (
                       <FontAwesome6 name="xmark" size={12} color="#999999" />
                     )}
                   </Animated.View>
@@ -147,7 +193,7 @@ export const Streak = ({
                     style={[
                       styles.dayLabel,
                       isToday && styles.todayLabel,
-                      d.hitGoal && styles.dayLabelHit,
+                      hitGoal && styles.dayLabelHit,
                     ]}
                   >
                     {dayLabels[DateTime.fromISO(d.date).weekday % 7]}
