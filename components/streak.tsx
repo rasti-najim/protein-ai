@@ -1,10 +1,11 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useMemo } from "react";
 import { View, Text, StyleSheet, Dimensions } from "react-native";
 import { Button } from "@/components/button";
 import { Image } from "expo-image";
 import { DateTime } from "luxon";
 import { FontAwesome6 } from "@expo/vector-icons";
 import Animated, { FadeInUp, FadeInDown } from "react-native-reanimated";
+import { useStreakQuery } from "@/hooks/useStreakQuery";
 
 interface StreakProps {
   currentStreak: number;
@@ -21,32 +22,14 @@ export const Streak = ({
   daysToNextLevel = 0,
   onClose,
 }: StreakProps) => {
-  const [dailyBreakdown, setDailyBreakdown] = useState<
-    { date: string; hitGoal: boolean }[]
-  >([]);
-
-  // Mock last 7 days data and compute current streak from it
-  useEffect(() => {
-    const today = DateTime.now();
-    const mockHits = [true, true, false, true, false, true, true];
-    const last7 = Array.from({ length: 7 }, (_, i) => {
-      const date = today.minus({ days: 6 - i }).toISODate() as string;
-      return { date, hitGoal: mockHits[i] };
-    });
-    setDailyBreakdown(last7);
-  }, []);
+  const { data: streakData, isLoading, error } = useStreakQuery();
 
   const dayLabels = useMemo(() => ["S", "M", "T", "W", "T", "F", "S"], []);
 
-  // Compute streak from mock data (consecutive hits ending today)
+  // Use the current streak from real data
   const computedStreak = useMemo(() => {
-    let count = 0;
-    for (let i = dailyBreakdown.length - 1; i >= 0; i -= 1) {
-      if (dailyBreakdown[i].hitGoal) count += 1;
-      else break;
-    }
-    return count;
-  }, [dailyBreakdown]);
+    return streakData?.length || 0;
+  }, [streakData]);
 
   const getStreakMessage = () => {
     if (computedStreak === 0) return "Start your streak today!";
@@ -62,6 +45,39 @@ export const Streak = ({
     if (computedStreak < 100) return "Dedicated";
     return "Master";
   };
+
+  if (isLoading) {
+    return (
+      <View style={styles.container}>
+        <Image
+          source={require("@/assets/images/background.png")}
+          style={styles.background}
+          contentFit="cover"
+        />
+        <View style={[styles.content, styles.loadingContainer]}>
+          <Text style={styles.loadingText}>Loading your streak...</Text>
+        </View>
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={styles.container}>
+        <Image
+          source={require("@/assets/images/background.png")}
+          style={styles.background}
+          contentFit="cover"
+        />
+        <View style={[styles.content, styles.loadingContainer]}>
+          <Text style={styles.loadingText}>Failed to load streak data</Text>
+          <Button style={styles.closeButton} onPress={onClose} variant="primary">
+            Close
+          </Button>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -104,9 +120,9 @@ export const Streak = ({
           style={styles.weekSection}
         >
           <View style={styles.weekRow}>
-            {dailyBreakdown.map((d, idx) => {
-              const isToday = idx === dailyBreakdown.length - 1;
-              const delay = 700 + (idx * 100); // Staggered animation
+            {streakData?.dailyBreakdown.map((d, idx) => {
+              const isToday = idx === (streakData?.dailyBreakdown.length || 0) - 1;
+              const delay = 700 + idx * 100; // Staggered animation
               return (
                 <Animated.View
                   key={d.date + idx}
@@ -154,7 +170,7 @@ export const Streak = ({
             onPress={onClose}
             variant="primary"
           >
-            Got it!
+            I'm committed!
           </Button>
         </Animated.View>
       </View>
@@ -325,5 +341,15 @@ const styles = StyleSheet.create({
   closeButton: {
     width: "100%",
     paddingVertical: 18,
+  },
+  loadingContainer: {
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  loadingText: {
+    fontSize: 20,
+    fontFamily: "Platypi",
+    color: "#2A2A2A",
+    textAlign: "center",
   },
 });

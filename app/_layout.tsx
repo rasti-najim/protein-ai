@@ -5,6 +5,17 @@ import { PhotoProvider } from "@/components/photo-context";
 import { useEffect } from "react";
 import Superwall from "@superwall/react-native-superwall";
 import { PostHogProvider } from "posthog-react-native";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5, // 5 minutes
+      gcTime: 1000 * 60 * 10, // 10 minutes (was cacheTime)
+      retry: 2,
+    },
+  },
+});
 
 export default function RootLayout() {
   useEffect(() => {
@@ -14,14 +25,16 @@ export default function RootLayout() {
   }, []);
 
   return (
-    <PostHogProvider apiKey={process.env.EXPO_PUBLIC_POSTHOG_API_KEY}>
-      <AuthProvider>
-        <PhotoProvider>
-          <GestureHandlerRootView>
-            <Slot />
-          </GestureHandlerRootView>
-        </PhotoProvider>
-      </AuthProvider>
-    </PostHogProvider>
+    <QueryClientProvider client={queryClient}>
+      <PostHogProvider apiKey={process.env.EXPO_PUBLIC_POSTHOG_API_KEY}>
+        <AuthProvider>
+          <PhotoProvider>
+            <GestureHandlerRootView>
+              <Slot />
+            </GestureHandlerRootView>
+          </PhotoProvider>
+        </AuthProvider>
+      </PostHogProvider>
+    </QueryClientProvider>
   );
 }

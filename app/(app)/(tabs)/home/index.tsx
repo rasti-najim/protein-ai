@@ -531,7 +531,8 @@ export default function Index() {
           <Text style={styles.title}>Protein AI</Text>
           <Pressable onPress={handleBadgePress}>
             <View style={styles.badge}>
-              <Text style={styles.badgeNumber}>{streak.current_streak} 🔥</Text>
+              <Text style={styles.badgeNumber}>{streak.current_streak}</Text>
+              <FontAwesome6 name="fire" size={16} color="#FF6B35" />
             </View>
           </Pressable>
         </View>
@@ -557,7 +558,7 @@ export default function Index() {
             progress={progress}
             size={200}
             strokeWidth={8}
-            color="#7FEA71"
+            color={currentProtein >= dailyGoal ? "#7FEA71" : "#FF6B6B"}
             backgroundColor="#E0E0E0"
             goalText={`${dailyGoal}g`}
           >
