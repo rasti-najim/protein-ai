@@ -48,7 +48,8 @@ export interface Meal {
   id?: number;
   name: string;
   protein: number;
-  scanned: boolean;
+  scanned?: boolean; // Keep for backward compatibility
+  logging_method?: 'photo_scan' | 'manual_entry';
   created_at: string;
 }
 
@@ -245,7 +246,8 @@ export default function Index() {
               id: meal.id,
               name: meal.name,
               protein: meal.protein_amount,
-              scanned: true,
+              scanned: meal.logging_method === 'photo_scan', // Keep for backward compatibility
+              logging_method: meal.logging_method,
               created_at: meal.created_at || "",
             }))
           );
@@ -412,7 +414,8 @@ export default function Index() {
       {
         name: "",
         protein: 0,
-        scanned: false,
+        scanned: true,
+        logging_method: 'photo_scan',
         id: tempId,
         created_at: DateTime.now().toUTC().toISO(),
       },
@@ -479,6 +482,7 @@ export default function Index() {
           name: scanData.meal_name,
           protein: scanData.protein_g,
           scanned: true,
+          logging_method: 'photo_scan',
           created_at: DateTime.now().toUTC().toISO(),
         },
         ...prev,
@@ -544,6 +548,7 @@ export default function Index() {
       name: meal.name,
       protein: meal.protein,
       scanned: meal.scanned,
+      logging_method: meal.logging_method,
       created_at: meal.created_at,
     });
     setShowMealDetails(true);

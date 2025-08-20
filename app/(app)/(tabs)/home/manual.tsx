@@ -10,6 +10,7 @@ import {
   TouchableWithoutFeedback,
   Keyboard,
   ActivityIndicator,
+  Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Redirect, useRouter } from "expo-router";
@@ -33,6 +34,7 @@ export default function Manual() {
   const analyzeDescription = async () => {
     if (!mealDescription.trim()) return;
     
+    Keyboard.dismiss(); // Dismiss keyboard when analysis starts
     setIsAnalyzing(true);
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     
@@ -49,6 +51,16 @@ export default function Manual() {
       }
 
       if (data) {
+        // Check if the description is not a meal
+        if (data.not_a_meal) {
+          Alert.alert(
+            "Not a Meal",
+            "The description doesn't appear to be about a meal. Please try describing an actual food or meal."
+          );
+          return;
+        }
+
+        // The edge function returns additional streak data along with meal analysis
         setMealName(data.meal_name || "");
         setProteinAmount(data.protein_g ? data.protein_g.toString() : "");
         setEntryMode('manual');
@@ -56,6 +68,8 @@ export default function Manual() {
           description_length: mealDescription.length,
           meal_name: data.meal_name,
           protein_amount: data.protein_g,
+          current_streak: data.currentStreak,
+          streak_extended: data.streakExtended,
         });
       }
     } catch (error) {
@@ -73,6 +87,7 @@ export default function Manual() {
         protein_amount: Number(proteinAmount),
         user_id: user?.id!,
         created_at: DateTime.now().toISO(),
+        logging_method: 'manual_entry', // Both description and manual input are considered manual entry
       });
       posthog.capture("user_entered_manually", {
         meal_name: mealName,

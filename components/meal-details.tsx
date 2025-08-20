@@ -19,7 +19,8 @@ export interface MealDetailsData {
   id?: number;
   name: string;
   protein: number;
-  scanned: boolean;
+  scanned?: boolean; // Keep for backward compatibility
+  logging_method?: 'photo_scan' | 'manual_entry';
   created_at: string;
 }
 
@@ -33,6 +34,14 @@ interface MealDetailsProps {
 }
 
 export const MealDetails = ({ meal, visible, onClose, onEdit, onDelete, onMealUpdated }: MealDetailsProps) => {
+  // Helper function to determine if meal is photo-based
+  const isPhotoMeal = (meal: MealDetailsData) => {
+    // Use new logging_method field if available, fallback to scanned for backward compatibility
+    if (meal.logging_method) {
+      return meal.logging_method === 'photo_scan';
+    }
+    return meal.scanned || false;
+  };
   const scaleAnim = useRef(new Animated.Value(0.8)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const [isEditMode, setIsEditMode] = useState(false);
@@ -181,7 +190,7 @@ export const MealDetails = ({ meal, visible, onClose, onEdit, onDelete, onMealUp
           <View style={styles.header}>
             <View style={styles.mealIconContainer}>
               <FontAwesome6 
-                name={meal.scanned ? "camera" : "keyboard"} 
+                name={isPhotoMeal(meal) ? "camera" : "pen"} 
                 size={24} 
                 color="#FF6B35" 
               />
@@ -244,12 +253,12 @@ export const MealDetails = ({ meal, visible, onClose, onEdit, onDelete, onMealUp
               
               <View style={styles.metaItem}>
                 <FontAwesome6 
-                  name={meal.scanned ? "camera" : "keyboard"} 
+                  name={isPhotoMeal(meal) ? "camera" : "pen"} 
                   size={14} 
                   color="#666666" 
                 />
                 <Text style={styles.metaText}>
-                  {meal.scanned ? "Photo scanned" : "Manual entry"}
+                  {isPhotoMeal(meal) ? "Photo scanned" : "Manual entry"}
                 </Text>
               </View>
             </View>
