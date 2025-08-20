@@ -33,6 +33,7 @@ import { DateTime } from "luxon";
 import { useAuth } from "@/components/auth-context";
 import { MealSkeleton } from "@/components/meals-skeleton";
 import { GoalReached } from "@/components/goal-reached";
+import * as StoreReview from "expo-store-review";
 import { usePhoto } from "@/components/photo-context";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Button } from "@/components/button";
@@ -109,8 +110,70 @@ export default function Index() {
     }
   };
 
+  const checkForFirstMealReview = async () => {
+    try {
+      const hasShownReview = await AsyncStorage.getItem("hasShownStoreReview");
+      const nextPromptDate = await AsyncStorage.getItem("storeReviewNextPrompt");
+      const mealCount = await AsyncStorage.getItem("totalMealsLogged");
+      
+      if (__DEV__) {
+        console.log('🔍 Review Check:', {
+          hasShownReview,
+          nextPromptDate,
+          mealCount,
+          currentTime: DateTime.now().toISO(),
+        });
+      }
+      
+      // TESTING: Force show review prompt (remove this for production)
+      if (__DEV__ && false) { // Set to true to test
+        setTimeout(() => {
+          setShowStoreReview(true);
+        }, 1000);
+        return;
+      }
+      
+      // Don't show if user already rated the app
+      if (hasShownReview === "true") {
+        return;
+      }
+      
+      // Check if it's time to show again after "Maybe Later"
+      if (nextPromptDate) {
+        const now = DateTime.now();
+        const nextPrompt = DateTime.fromISO(nextPromptDate);
+        if (now < nextPrompt) {
+          return; // Not time yet
+        }
+      }
+      
+      const mealCountNum = parseInt(mealCount || "0");
+      
+      // Show review prompt only after meaningful usage (3+ meals) OR if it's time for retry
+      const shouldShowForUsage = mealCountNum >= 3;
+      const shouldShowForRetry = nextPromptDate && DateTime.now() >= DateTime.fromISO(nextPromptDate);
+      
+      if (shouldShowForUsage || shouldShowForRetry) {
+        setTimeout(async () => {
+          try {
+            if (await StoreReview.hasAction()) {
+              await StoreReview.requestReview();
+              await AsyncStorage.setItem("hasShownStoreReview", "true");
+              posthog.capture("store_review_requested");
+            }
+          } catch (error) {
+            console.error("Error requesting review:", error);
+          }
+        }, 2000); // Show after 2 seconds delay to not interrupt user flow
+      }
+    } catch (e) {
+      console.error("Failed to check store review status", e);
+    }
+  };
+
   useEffect(() => {
     checkIfWeShouldResetGoalMessage();
+    checkForFirstMealReview(); // Also check if we should show review on app load
   }, []);
 
   const fetchStreak = async () => {
@@ -182,6 +245,22 @@ export default function Index() {
               created_at: meal.created_at || "",
             }))
           );
+          
+          // Update total meal count and check for review prompt
+          try {
+            const storedCount = await AsyncStorage.getItem("totalMealsLogged");
+            const currentStoredCount = storedCount ? parseInt(storedCount) : 0;
+            
+            if (data.length > currentStoredCount) {
+              await AsyncStorage.setItem("totalMealsLogged", data.length.toString());
+              // Check if we should show review after meaningful usage (could be from manual entry)
+              if (currentStoredCount < 3 && data.length >= 3) {
+                checkForFirstMealReview();
+              }
+            }
+          } catch (e) {
+            console.error("Failed to update meal count from fetch", e);
+          }
         }
       };
       fetchMeals();
@@ -403,6 +482,21 @@ export default function Index() {
 
       // Update current protein intake
       setCurrentProtein((prev) => prev + scanData.protein_g);
+      
+      // Track meal count for store review
+      try {
+        const currentCount = await AsyncStorage.getItem("totalMealsLogged");
+        const newCount = currentCount ? parseInt(currentCount) + 1 : 1;
+        await AsyncStorage.setItem("totalMealsLogged", newCount.toString());
+        
+        // Check if we should show store review after meaningful usage (3+ meals)
+        if (newCount === 3) {
+          checkForFirstMealReview();
+        }
+      } catch (e) {
+        console.error("Failed to update meal count", e);
+      }
+      
       posthog.capture("meal_scanned", {
         meal_name: scanData.meal_name,
         protein_amount: scanData.protein_g,
@@ -567,12 +661,59 @@ export default function Index() {
       >
         <View style={styles.header}>
           <Text style={styles.title}>Protein AI</Text>
-          <Pressable onPress={handleBadgePress}>
-            <View style={styles.badge}>
-              <Text style={styles.badgeNumber}>{streak.current_streak}</Text>
-              <FontAwesome6 name="fire" size={16} color="#FF6B35" />
-            </View>
-          </Pressable>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            {__DEV__ && (
+              <View style={{ flexDirection: 'row', gap: 4 }}>
+                <Pressable 
+                  onPress={async () => {
+                    try {
+                      if (await StoreReview.hasAction()) {
+                        await StoreReview.requestReview();
+                      }
+                    } catch (error) {
+                      console.error("Error requesting review:", error);
+                    }
+                  }}
+                  style={{
+                    backgroundColor: '#FF6B35',
+                    paddingHorizontal: 6,
+                    paddingVertical: 4,
+                    borderRadius: 6,
+                    borderWidth: 1,
+                    borderColor: '#2A2A2A',
+                  }}
+                >
+                  <Text style={{ fontSize: 10, color: '#FCE9BC', fontFamily: 'Platypi' }}>Review</Text>
+                </Pressable>
+                <Pressable 
+                  onPress={async () => {
+                    await AsyncStorage.multiRemove([
+                      'hasShownStoreReview', 
+                      'storeReviewNextPrompt', 
+                      'totalMealsLogged'
+                    ]);
+                    console.log('🧹 Reset review state');
+                  }}
+                  style={{
+                    backgroundColor: '#7FEA71',
+                    paddingHorizontal: 6,
+                    paddingVertical: 4,
+                    borderRadius: 6,
+                    borderWidth: 1,
+                    borderColor: '#2A2A2A',
+                  }}
+                >
+                  <Text style={{ fontSize: 10, color: '#2A2A2A', fontFamily: 'Platypi' }}>Reset</Text>
+                </Pressable>
+              </View>
+            )}
+            <Pressable onPress={handleBadgePress}>
+              <View style={styles.badge}>
+                <Text style={styles.badgeNumber}>{streak.current_streak}</Text>
+                <FontAwesome6 name="fire" size={16} color="#FF6B35" />
+              </View>
+            </Pressable>
+          </View>
         </View>
 
         <View style={styles.todayContainer}>
@@ -661,6 +802,7 @@ export default function Index() {
           }}
         />
       )}
+
     </SafeAreaView>
   );
 }
