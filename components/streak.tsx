@@ -66,10 +66,14 @@ export const Streak = ({
     fetchTodayProgress();
   }, [user?.id]);
 
-  // Use the current streak from real data
+  // Use the current streak and max streak from real data
   const computedStreak = useMemo(() => {
     return streakData?.length || 0;
   }, [streakData]);
+
+  const computedMaxStreak = useMemo(() => {
+    return streakData?.maxStreak || maxStreak || 0;
+  }, [streakData, maxStreak]);
 
   const getStreakMessage = () => {
     if (computedStreak === 0) return "Start your streak today!";

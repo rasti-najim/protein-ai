@@ -4,14 +4,18 @@ import { useAuth } from "@/components/auth-context";
 import { DateTime } from "luxon";
 
 interface StreakHistoryItem {
-  periodStart: string;
-  periodEnd: string;
-  length: number;
+  date: string;               // YYYY-MM-DD format
+  total_protein: number;      // protein consumed that day
+  goal_met: boolean;          // whether daily goal was achieved
+  created_at: string;         // when record was created
+  updated_at: string;         // when record was last updated
 }
 
 interface StreakData {
-  length: number;
-  streakHistory: StreakHistoryItem[];
+  length: number;               // current streak
+  maxStreak: number;            // highest streak achieved
+  lastGoalDate: string | null;  // last date goal was met (YYYY-MM-DD)
+  streakHistory: StreakHistoryItem[];  // last 30 days from daily_protein_totals
 }
 
 interface DailyBreakdown {
@@ -38,12 +42,9 @@ const convertToDailyBreakdown = (streakHistory: StreakHistoryItem[]): DailyBreak
     const date = today.minus({ days: 6 - i });
     const dateStr = date.toISODate() as string;
     
-    // Find if this date falls within any streak period
-    const hitGoal = streakHistory.some((period) => {
-      const periodStart = DateTime.fromISO(period.periodStart);
-      const periodEnd = DateTime.fromISO(period.periodEnd);
-      return date >= periodStart && date <= periodEnd && period.length > 0;
-    });
+    // Find the streak history item for this date
+    const dayData = streakHistory.find((item) => item.date === dateStr);
+    const hitGoal = dayData?.goal_met || false;
     
     return { date: dateStr, hitGoal };
   });
@@ -59,7 +60,7 @@ export const useStreakQuery = () => {
     staleTime: 1000 * 60 * 5, // 5 minutes
     select: (data: StreakData) => ({
       ...data,
-      dailyBreakdown: convertToDailyBreakdown(data.streakHistory),
+      dailyBreakdown: convertToDailyBreakdown(data.streakHistory || []),
     }),
   });
 };

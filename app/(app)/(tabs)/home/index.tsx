@@ -1,3 +1,4 @@
+import React from "react";
 import {
   Text,
   View,
@@ -317,12 +318,12 @@ export default function Index() {
       params: {
         streak: JSON.stringify({
           current_streak: currentStreak,
-          max_streak: 0, // Can be updated if you have this data
-          days_to_next_level: 0, // Can be updated if you have this data
+          max_streak: streakData?.maxStreak || 0,
+          days_to_next_level: 0, // Can be calculated if needed
         }),
       },
     });
-  }, [currentStreak]);
+  }, [currentStreak, streakData?.maxStreak]);
 
   const handleSheetChanges = useCallback((index: number) => {
     if (index === -1) {
