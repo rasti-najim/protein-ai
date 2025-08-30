@@ -7,22 +7,19 @@ import {
   NativeSyntheticEvent,
   NativeScrollEvent,
   Dimensions,
-  Button,
 } from "react-native";
-import { Image } from "expo-image";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { useRef, useState, useEffect } from "react";
 import * as Haptics from "expo-haptics";
 import Animated, {
-  withSpring,
   useAnimatedStyle,
   withSequence,
   withTiming,
   useSharedValue,
-  Easing,
 } from "react-native-reanimated";
 import { usePostHog } from "posthog-react-native";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 
 const width = Dimensions.get("window").width;
 const height = Dimensions.get("window").height;
@@ -36,6 +33,8 @@ export default function Page() {
   const logoScale = useSharedValue(1);
   const modalSlide = useSharedValue(0);
   const dotScale = useSharedValue(1);
+  const titleOpacity = useSharedValue(0);
+  const subtitleOpacity = useSharedValue(0);
 
   const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const contentOffset = event.nativeEvent.contentOffset.x;
@@ -46,61 +45,73 @@ export default function Page() {
   };
 
   useEffect(() => {
+    // Initial animations
+    titleOpacity.value = withTiming(1, { duration: 800 });
+    subtitleOpacity.value = withTiming(1, { duration: 1000 });
+  }, [titleOpacity, subtitleOpacity]);
+
+  useEffect(() => {
     dotScale.value = withSequence(
       withTiming(1.4, { duration: 200 }),
       withTiming(1, { duration: 150 })
     );
-  }, [currentStep]);
+  }, [currentStep, dotScale]);
 
   const onboardingSteps = [
     {
-      title: "No more calorie counting.",
-      subtitle: "A high-protein diet helps with:",
+      title: "Track Protein, Not Calories",
+      subtitle: "Focus on what matters most:",
       description:
-        "Lean Muscle Growth\nFat Loss\nQuick Recovery\nAll-Day Energy",
+        "• Build lean muscle\n• Burn fat naturally\n• Recover faster\n• Stay energized all day",
+      icon: "food-apple" as const,
     },
     {
-      title: "A Personalized Protein Plan",
-      subtitle: "Based on your profile,",
+      title: "Your Personal Plan",
+      subtitle: "AI-powered nutrition tailored to you:",
       description:
-        "We select the optimal amount of protein for you to eat every day.",
+        "We calculate your optimal daily protein goal based on your body, goals, and lifestyle.",
+      icon: "account-star" as const,
     },
     {
-      title: "Less Than 5 Minutes a Day",
-      subtitle: "With our AI scanning software,",
+      title: "Effortless Tracking",
+      subtitle: "Just snap and go:",
       description:
-        "We streamline your journey to a lean, high-protein, and nutrient-dense diet.",
+        "Our AI instantly recognizes your meals and tracks protein content in seconds.",
+      icon: "camera-plus" as const,
     },
   ];
+
+  const StepIndicator = ({ index }: { index: number }) => {
+    const animatedStyle = useAnimatedStyle(() => {
+      return {
+        transform: [
+          {
+            scale: currentStep === index ? dotScale.value : 1,
+          },
+        ],
+      };
+    });
+
+    return (
+      <Animated.View
+        style={[
+          styles.stepDot,
+          {
+            backgroundColor:
+              currentStep === index ? "#333333" : "rgba(51, 51, 51, 0.3)",
+          },
+          animatedStyle,
+        ]}
+      />
+    );
+  };
 
   const renderStepIndicators = () => {
     return (
       <View style={styles.stepIndicatorContainer}>
-        {onboardingSteps.map((_, index) => {
-          const animatedStyle = useAnimatedStyle(() => {
-            return {
-              transform: [
-                {
-                  scale: currentStep === index ? dotScale.value : 1,
-                },
-              ],
-            };
-          });
-
-          return (
-            <Animated.View
-              key={index}
-              style={[
-                styles.stepDot,
-                {
-                  backgroundColor:
-                    currentStep === index ? "#333333" : "#D1D1D6",
-                },
-                animatedStyle,
-              ]}
-            />
-          );
-        })}
+        {onboardingSteps.map((_, index) => (
+          <StepIndicator key={index} index={index} />
+        ))}
       </View>
     );
   };
@@ -118,12 +129,24 @@ export default function Page() {
             showsHorizontalScrollIndicator={false}
             scrollEventThrottle={16}
             onMomentumScrollEnd={handleScroll}
+            decelerationRate="fast"
+            snapToAlignment="center"
+            contentContainerStyle={{ alignItems: "center" }}
           >
             {onboardingSteps.map((step, index) => (
               <View key={index} style={[styles.modalContent, { width: width }]}>
-                <Text style={styles.tagline}>{step.title}</Text>
-                <Text style={styles.subtitle}>{step.subtitle}</Text>
-                <Text style={styles.description}>{step.description}</Text>
+                <View style={styles.contentWrapper}>
+                  <View style={styles.iconContainer}>
+                    <MaterialCommunityIcons
+                      name={step.icon}
+                      size={48}
+                      color="#333333"
+                    />
+                  </View>
+                  <Text style={styles.tagline}>{step.title}</Text>
+                  <Text style={styles.subtitle}>{step.subtitle}</Text>
+                  <Text style={styles.description}>{step.description}</Text>
+                </View>
               </View>
             ))}
           </ScrollView>
@@ -141,14 +164,17 @@ export default function Page() {
               <Text style={[styles.buttonText]}>Get Started</Text>
             </TouchableOpacity>
 
-            <Button
+            <TouchableOpacity
               onPress={async () => {
                 await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                 router.push("/login");
               }}
-              title="Already have an account? Log in"
-              color="#333333"
-            />
+              style={styles.loginButton}
+            >
+              <Text style={styles.loginText}>
+                Already have an account? Log in
+              </Text>
+            </TouchableOpacity>
           </View>
         </View>
       </Animated.View>
@@ -156,21 +182,31 @@ export default function Page() {
   };
 
   return (
-    <SafeAreaView edges={["left", "right"]} style={styles.container}>
-      <Image
-        source={require("../assets/images/steak-dark.png")}
-        style={styles.backgroundImage}
-        contentFit="cover"
-      />
-      <SafeAreaView style={styles.content}>
-        <Animated.Text
-          style={[styles.title, { transform: [{ scale: logoScale }] }]}
-        >
-          Protein AI
-        </Animated.Text>
+    <View style={[styles.container, { backgroundColor: "#fae5d2" }]}>
+      <SafeAreaView edges={["left", "right"]} style={styles.safeArea}>
+        <View style={styles.content}>
+          <View style={styles.headerContent}>
+            <Animated.Text
+              style={[
+                styles.title,
+                {
+                  transform: [{ scale: logoScale }],
+                  opacity: titleOpacity,
+                },
+              ]}
+            >
+              Protein AI
+            </Animated.Text>
+            <Animated.Text
+              style={[styles.heroSubtitle, { opacity: subtitleOpacity }]}
+            >
+              Your AI-powered protein tracking companion
+            </Animated.Text>
+          </View>
+        </View>
+        <Modal />
       </SafeAreaView>
-      <Modal />
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -178,42 +214,53 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  backgroundImage: {
-    ...StyleSheet.absoluteFillObject,
+  safeArea: {
+    flex: 1,
   },
   content: {
     flex: 1,
-    justifyContent: "space-between",
-    padding: width * 0.05,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 20,
+  },
+  headerContent: {
+    alignItems: "center",
+    gap: 12,
   },
   title: {
-    fontSize: Math.min(width * 0.12, 48),
-    fontFamily: "Platypi",
-    color: "#FCE9BC",
-    marginTop: height * 0.05,
-    marginBottom: height * 0.05,
+    fontSize: 52,
+    color: "#333333",
+    fontWeight: "700",
+    textAlign: "center",
+    letterSpacing: -1,
+  },
+  heroSubtitle: {
+    fontSize: 18,
+    color: "rgba(51, 51, 51, 0.7)",
+    textAlign: "center",
+    fontWeight: "500",
+    maxWidth: 280,
   },
   tagline: {
-    fontSize: Math.min(Math.max(width * 0.08, 32), 36),
-    fontFamily: "Platypi",
-    color: "#2A2A2A",
-    marginBottom: height * 0.015,
-    lineHeight: Math.min(Math.max(width * 0.1, 40), 44),
+    fontSize: 26,
+    color: "#333333",
+    marginBottom: 12,
+    fontWeight: "700",
+    textAlign: "center",
+    lineHeight: 32,
   },
   subtitle: {
-    fontSize: Math.min(Math.max(width * 0.045, 18), 20),
-    fontWeight: "700",
-    fontFamily: "Platypi",
-    color: "#2A2A2A",
-    marginTop: height * 0.02,
-    marginBottom: height * 0.01,
+    fontSize: 16,
+    color: "rgba(51, 51, 51, 0.8)",
+    marginBottom: 16,
+    textAlign: "center",
+    fontWeight: "500",
   },
   description: {
-    fontSize: Math.min(Math.max(width * 0.045, 18), 20),
-    fontFamily: "Platypi",
-    color: "#2A2A2A",
-    marginVertical: height * 0.01,
-    lineHeight: Math.min(Math.max(width * 0.06, 24), 28),
+    fontSize: 15,
+    color: "rgba(51, 51, 51, 0.7)",
+    lineHeight: 22,
+    textAlign: "center",
   },
   paginationContainer: {
     flexDirection: "row",
@@ -233,16 +280,23 @@ const styles = StyleSheet.create({
   },
   button: {
     backgroundColor: "#333333",
-    padding: width * 0.04,
-    borderRadius: Math.min(width * 0.08, 32),
+    paddingVertical: 18,
+    paddingHorizontal: 32,
+    borderRadius: 16,
     alignItems: "center",
-    marginHorizontal: width * 0.06,
-    marginBottom: height * 0.03,
+    marginHorizontal: 24,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 4,
   },
   buttonText: {
-    fontSize: Math.min(width * 0.06, 24),
-    fontFamily: "Platypi",
-    color: "#FCE9BC",
+    fontSize: 18,
+    color: "#fae5d2",
     fontWeight: "600",
   },
   modalCard: {
@@ -250,31 +304,66 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: "#FCE9BC",
-    height: Math.min(Math.max(height * 0.55, 500), 600),
-    borderTopLeftRadius: Math.min(width * 0.08, 30),
-    borderTopRightRadius: Math.min(width * 0.08, 30),
+    backgroundColor: "#fae5d2",
+    height: Math.min(Math.max(height * 0.65, 520), 680),
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
     overflow: "hidden",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: -8,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 16,
+    elevation: 12,
+    borderWidth: 1,
+    borderColor: "rgba(51, 51, 51, 0.1)",
+    borderBottomWidth: 0,
   },
   modalView: {
     flex: 1,
+    paddingTop: 24,
   },
   modalContent: {
     width: width,
-    padding: width * 0.05,
-    justifyContent: "space-between",
+    paddingHorizontal: 32,
+    paddingVertical: 20,
+    justifyContent: "center",
+    flex: 1,
+  },
+  contentWrapper: {
+    alignItems: "center",
+    gap: 12,
+  },
+  iconContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: "rgba(255, 255, 255, 0.6)",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 20,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
   stepIndicatorContainer: {
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
-    gap: width * 0.02,
-    marginVertical: height * 0.03,
+    gap: 8,
+    marginVertical: 24,
   },
   stepDot: {
-    width: width * 0.02,
-    height: width * 0.02,
-    borderRadius: width * 0.01,
+    width: 10,
+    height: 10,
+    borderRadius: 5,
   },
   activeStepDot: {
     backgroundColor: "#2A2A2A",
@@ -284,30 +373,26 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     paddingHorizontal: 20,
     paddingBottom: 40,
-    backgroundColor: "#FCE9BC",
+    backgroundColor: "#fae5d2",
   },
   buttonTextDisabled: {
     color: "#CCCCCC",
   },
   buttonGroup: {
-    gap: height * 0.015,
-    marginHorizontal: width * 0.06,
+    gap: 16,
+    marginHorizontal: 24,
     marginTop: "auto",
-    marginBottom: height * 0.03,
+    marginBottom: 32,
   },
-  secondaryButton: {
-    backgroundColor: "transparent",
-    borderWidth: 1,
-    borderColor: "#333333",
-  },
-  secondaryButtonText: {
-    color: "#333333",
+  loginButton: {
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    alignItems: "center",
   },
   loginText: {
-    fontSize: Math.min(width * 0.04, 16),
-    fontFamily: "Platypi",
-    color: "#2A2A2A",
+    fontSize: 16,
+    color: "rgba(51, 51, 51, 0.7)",
     textAlign: "center",
-    opacity: 0.8,
+    fontWeight: "600",
   },
 });

@@ -55,7 +55,7 @@ export const DailyProteinGoal = ({
     ]).start(() => {
       onSelect(proteinGoal);
     });
-  }, []);
+  }, [fadeAnim, scaleAnim, onSelect, proteinGoal]);
 
   return (
     <View style={styles.container}>
@@ -182,10 +182,11 @@ const styles = StyleSheet.create({
     paddingBottom: 24,
   },
   title: {
-    fontSize: 42,
-    fontFamily: "Platypi",
-    color: "#2A2A2A",
+    fontSize: 36,
+    color: "#333333",
     marginBottom: 40,
+    fontWeight: "600",
+    textAlign: "center",
   },
   goalContainer: {
     alignItems: "center",
@@ -196,14 +197,12 @@ const styles = StyleSheet.create({
   },
   goalNumber: {
     fontSize: 48,
-    fontFamily: "Platypi",
-    color: "#2A2A2A",
+    color: "#333333",
     fontWeight: "600",
   },
   goalLabel: {
     fontSize: 24,
-    fontFamily: "Platypi",
-    color: "#2A2A2A",
+    color: "#333333",
     marginTop: 4,
   },
   iconContainer: {
@@ -211,10 +210,10 @@ const styles = StyleSheet.create({
   },
   description: {
     fontSize: 18,
-    fontFamily: "Platypi",
-    color: "#2A2A2A",
-    lineHeight: 32,
+    color: "rgba(51, 51, 51, 0.8)",
+    lineHeight: 26,
     marginBottom: 40,
+    textAlign: "center",
   },
   boldText: {
     fontWeight: "bold",
@@ -227,16 +226,15 @@ const styles = StyleSheet.create({
     marginTop: "auto",
   },
   finishButtonText: {
-    color: "#FCE9BC",
+    color: "#fae5d2",
     fontSize: 20,
-    fontFamily: "Platypi",
     fontWeight: "600",
   },
   citationContainer: {
-    backgroundColor: "#FCE9BC",
+    backgroundColor: "#fae5d2",
     paddingVertical: 12,
     borderTopWidth: 1,
-    borderTopColor: "rgba(42, 42, 42, 0.1)",
+    borderTopColor: "rgba(51, 51, 51, 0.1)",
   },
   citationHeader: {
     flexDirection: "row",
@@ -246,13 +244,11 @@ const styles = StyleSheet.create({
   },
   citationTitle: {
     fontSize: 16,
-    fontFamily: "Platypi",
     color: "#666666",
     fontWeight: "600",
   },
   citationSubtitle: {
     fontSize: 14,
-    fontFamily: "Platypi",
     color: "#666666",
     marginTop: 12,
     marginBottom: 8,
@@ -267,7 +263,6 @@ const styles = StyleSheet.create({
   },
   citationText: {
     fontSize: 14,
-    fontFamily: "Platypi",
     color: "#666666",
     lineHeight: 24,
   },

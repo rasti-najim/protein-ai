@@ -1,7 +1,5 @@
 import { Text, View, StyleSheet, Animated } from "react-native";
-import { OnboardingLayout } from "./onboarding-layout";
 import { useEffect, useRef } from "react";
-import { MaterialCommunityIcons } from "@expo/vector-icons";
 
 export const Perfect = () => {
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -21,7 +19,7 @@ export const Perfect = () => {
         useNativeDriver: true,
       }),
     ]).start();
-  }, []);
+  }, [fadeAnim, scaleAnim]);
 
   return (
     <View style={styles.container}>
@@ -55,25 +53,30 @@ export const Perfect = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingHorizontal: 16,
+    justifyContent: "center",
+  },
+  contentContainer: {
+    alignItems: "center",
+    paddingHorizontal: 24,
   },
   title: {
-    fontSize: 42,
-    fontFamily: "Platypi",
-    color: "#2A2A2A",
-    marginBottom: 16,
+    fontSize: 36,
+    color: "#333333",
+    marginBottom: 24,
+    fontWeight: "600",
+    textAlign: "center",
   },
   description: {
-    fontSize: 20,
-    fontFamily: "Platypi",
-    color: "#2A2A2A",
-    lineHeight: 28,
+    fontSize: 18,
+    color: "rgba(51, 51, 51, 0.8)",
+    lineHeight: 26,
     marginBottom: 32,
+    textAlign: "center",
   },
   subtitle: {
-    fontSize: 20,
-    fontFamily: "Platypi",
-    color: "#2A2A2A",
-    lineHeight: 28,
+    fontSize: 16,
+    color: "rgba(51, 51, 51, 0.7)",
+    lineHeight: 22,
+    textAlign: "center",
   },
 });

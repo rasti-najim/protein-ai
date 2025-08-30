@@ -44,7 +44,7 @@ export const SelectOption = ({
         useNativeDriver: true,
       }),
     ]).start();
-  }, []);
+  }, [fadeAnim, scaleAnim]);
 
   const handleSelect = async (value: string) => {
     await Haptics.selectionAsync();
@@ -95,40 +95,45 @@ export const SelectOption = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    justifyContent: "space-between",
   },
   content: {
     flex: 1,
   },
   title: {
-    fontSize: 42,
-    fontFamily: "Platypi",
-    color: "#2A2A2A",
-    marginBottom: 32,
+    fontSize: 36,
+    color: "#333333",
+    marginBottom: 16,
+    fontWeight: "600",
   },
   subtitle: {
-    fontSize: 24,
-    fontFamily: "Platypi",
-    color: "#2A2A2A",
-    marginBottom: 24,
+    fontSize: 18,
+    color: "rgba(51, 51, 51, 0.7)",
+    marginBottom: 48,
+    lineHeight: 24,
   },
   optionsContainer: {
-    marginTop: 16,
+    gap: 16,
   },
   option: {
-    paddingVertical: 16,
+    paddingVertical: 20,
+    paddingHorizontal: 24,
     borderRadius: 16,
+    backgroundColor: "rgba(255, 255, 255, 0.4)",
+    borderWidth: 2,
+    borderColor: "transparent",
   },
   selectedOption: {
     backgroundColor: "#333333",
-    borderRadius: 16,
+    borderColor: "#333333",
   },
   optionText: {
-    fontSize: 32,
-    fontFamily: "Platypi",
-    color: "#2A2A2A",
-    paddingHorizontal: 16,
+    fontSize: 24,
+    color: "#333333",
+    fontWeight: "600",
+    textAlign: "center",
   },
   optionTextSelected: {
-    color: "#FCE9BC",
+    color: "#fae5d2",
   },
 });

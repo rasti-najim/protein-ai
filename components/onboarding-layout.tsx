@@ -7,13 +7,10 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from "react-native";
-import { Image } from "expo-image";
 import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
-import { BlurView } from "expo-blur";
-import { CircularProgress } from "./circular-progress";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { FontAwesome6 } from "@expo/vector-icons";
 
@@ -40,65 +37,66 @@ export const OnboardingLayout = ({
   showLayout = true,
   hideBottomBar = false,
 }: OnboardingLayoutProps) => {
+  const safeAreaInsets = useSafeAreaInsets();
+
   if (!showLayout) {
     return <>{children}</>;
   }
 
-  const safeAreaInsets = useSafeAreaInsets();
-
   return (
-    <View style={styles.container}>
-      <Image
-        source={require("../assets/images/steak-dark.png")}
-        style={styles.backgroundImage}
-        contentFit="cover"
-      />
-
+    <View style={[styles.container, { backgroundColor: "#fae5d2" }]}>
       <KeyboardAvoidingView
-        style={styles.overlay}
+        style={styles.keyboardView}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
         <SafeAreaView edges={["top", "left", "right"]} style={styles.safeArea}>
-          <View
-            style={[styles.modalView, { paddingBottom: safeAreaInsets.bottom }]}
-          >
+          <View style={styles.header}>
             <TouchableOpacity style={styles.backButton} onPress={onBack}>
-              <FontAwesome6 name="chevron-left" size={24} color="#2A2A2A" />
+              <FontAwesome6 name="chevron-left" size={20} color="#333333" />
             </TouchableOpacity>
 
+            <View style={styles.progressBarContainer}>
+              <View style={styles.progressTrack}>
+                <View
+                  style={[
+                    styles.progressFill,
+                    { width: `${((currentStep + 1) / totalSteps) * 100}%` },
+                  ]}
+                />
+              </View>
+              <Text style={styles.progressText}>
+                {currentStep + 1} of {totalSteps}
+              </Text>
+            </View>
+
+            <View style={styles.headerSpacer} />
+          </View>
+
+          <View
+            style={[styles.content, { paddingBottom: safeAreaInsets.bottom }]}
+          >
             {children}
 
             {!hideBottomBar && (
               <View style={styles.bottomBar}>
-                <View style={styles.bottomContent}>
-                  <CircularProgress
-                    progress={(currentStep + 1) / totalSteps}
-                    size={48}
-                    color="#4CAF50"
-                    backgroundColor="#E0E0E0"
-                    strokeWidth={4}
-                  >
-                    <MaterialCommunityIcons
-                      name="lightning-bolt"
-                      size={24}
-                      color="#4CAF50"
-                    />
-                  </CircularProgress>
-
-                  <TouchableOpacity
-                    style={[
-                      styles.continueButton,
-                      isNextDisabled && styles.buttonDisabled,
-                      hideBottomBar && { width: "100%" },
-                    ]}
-                    onPress={onNext}
-                    disabled={isNextDisabled}
-                  >
-                    <Text style={styles.continueButtonText}>
-                      {hideBottomBar ? "Finish" : nextButtonText}
-                    </Text>
-                  </TouchableOpacity>
-                </View>
+                <TouchableOpacity
+                  style={[
+                    styles.continueButton,
+                    isNextDisabled && styles.buttonDisabled,
+                  ]}
+                  onPress={onNext}
+                  disabled={isNextDisabled}
+                >
+                  <Text style={styles.continueButtonText}>
+                    {hideBottomBar ? "Finish" : nextButtonText}
+                  </Text>
+                  <MaterialCommunityIcons
+                    name="lightning-bolt"
+                    size={20}
+                    color="#fae5d2"
+                    style={styles.buttonIcon}
+                  />
+                </TouchableOpacity>
               </View>
             )}
           </View>
@@ -112,82 +110,88 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  backgroundImage: {
-    ...StyleSheet.absoluteFillObject,
-  },
-  overlay: {
+  keyboardView: {
     flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.3)",
   },
   safeArea: {
     flex: 1,
-    justifyContent: "flex-end",
   },
-  modalView: {
-    flex: 1,
-    backgroundColor: "#FCE9BC",
-    borderRadius: 40,
-    padding: 24,
-    paddingTop: 72,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
-    maxHeight: "90%",
-  },
-  progressBar: {
-    height: 3,
-    backgroundColor: "#D9D0C7",
-    borderRadius: 1.5,
-    marginBottom: 32,
-  },
-  progressFill: {
-    height: "100%",
-    backgroundColor: "#513B2F",
-    borderRadius: 1.5,
-  },
-  bottomBar: {
-    marginTop: "auto",
-    width: "100%",
-    paddingTop: 16,
-  },
-  bottomContent: {
+  header: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    width: "100%",
-    paddingHorizontal: 16,
-  },
-  continueButton: {
-    backgroundColor: "#333333",
-    padding: 16,
-    borderRadius: 16,
-    alignItems: "center",
-    width: 160,
-  },
-  continueButtonText: {
-    color: "#FCE9BC",
-    fontSize: 20,
-    fontFamily: "Platypi",
-    fontWeight: "600",
-  },
-  buttonDisabled: {
-    opacity: 0.5,
+    paddingHorizontal: 20,
+    paddingVertical: 16,
   },
   backButton: {
-    position: "absolute",
-    top: 16,
-    left: 16,
-    zIndex: 1,
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    backgroundColor: "rgba(51, 51, 51, 0.1)",
     justifyContent: "center",
     alignItems: "center",
+  },
+  progressBarContainer: {
+    flex: 1,
+    alignItems: "center",
+    paddingHorizontal: 20,
+  },
+  progressTrack: {
+    width: "100%",
+    height: 8,
+    backgroundColor: "rgba(51, 51, 51, 0.1)",
+    borderRadius: 4,
+    marginBottom: 8,
+  },
+  progressFill: {
+    height: "100%",
+    backgroundColor: "#333333",
+    borderRadius: 4,
+  },
+  progressText: {
+    fontSize: 14,
+    color: "#333333",
+    fontWeight: "600",
+  },
+  headerSpacer: {
+    width: 40,
+  },
+  content: {
+    flex: 1,
+    paddingHorizontal: 24,
+    paddingTop: 16,
+  },
+  bottomBar: {
+    marginTop: "auto",
+    paddingTop: 24,
+    paddingBottom: 16,
+  },
+  continueButton: {
+    backgroundColor: "#333333",
+    paddingVertical: 18,
+    paddingHorizontal: 32,
+    borderRadius: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  continueButtonText: {
+    color: "#fae5d2",
+    fontSize: 18,
+    fontWeight: "600",
+  },
+  buttonIcon: {
+    marginLeft: 8,
+  },
+  buttonDisabled: {
+    opacity: 0.5,
   },
 });

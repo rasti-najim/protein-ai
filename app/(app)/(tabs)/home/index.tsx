@@ -53,6 +53,7 @@ export interface Meal {
   scanned?: boolean; // Keep for backward compatibility
   logging_method?: 'photo_scan' | 'manual_entry';
   created_at: string;
+  isLoading?: boolean; // Add loading flag for skeleton display
 }
 
 // StreakData interface removed - now using useStreakQuery hook
@@ -385,16 +386,22 @@ export default function Index() {
       {
         name: "",
         protein: 0,
-        scanned: true,
+        scanned: false, // Set to false so skeleton shows
         logging_method: 'photo_scan',
         id: tempId,
         created_at: DateTime.now().toUTC().toISO(),
+        isLoading: true, // Add loading flag
       },
       ...prev,
     ]);
 
     try {
-      if (!photo?.base64) return;
+      if (!photo?.base64) {
+        // Clean up loading state if no photo
+        setMeals((prev) => prev.filter((meal) => meal.id !== tempId));
+        Alert.alert("Error", "No photo data found. Please try again.");
+        return;
+      }
 
       // Add minimum loading time for consistency
       const uploadStartTime = Date.now();
@@ -412,9 +419,15 @@ export default function Index() {
         );
 
       if (error) {
-        console.error(error);
+        console.error("Storage upload error:", error);
+        setMeals((prev) => prev.filter((meal) => meal.id !== tempId));
+        Alert.alert("Upload Error", "Failed to upload photo. Please try again.");
         return;
       }
+
+      // Create an AbortController for timeout handling
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
 
       const { data: scanData, error: scanError } =
         await supabase.functions.invoke("scan-photo", {
@@ -422,7 +435,12 @@ export default function Index() {
             imagePath: data.path,
             createdAt: DateTime.now().toUTC().toISO(),
           },
+          headers: {
+            'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
+          },
         });
+
+      clearTimeout(timeoutId);
 
       // Ensure minimum loading time of 1.5 seconds
       const elapsedTime = Date.now() - uploadStartTime;
@@ -431,7 +449,17 @@ export default function Index() {
       }
 
       if (scanError) {
-        console.error(scanError);
+        console.error("Scan error:", scanError);
+        setMeals((prev) => prev.filter((meal) => meal.id !== tempId));
+        
+        // Handle specific error types
+        if (scanError.message?.includes("aborted") || scanError.message?.includes("timeout")) {
+          Alert.alert("Timeout Error", "The scan took too long. Please try again with a clearer photo.");
+        } else if (scanError.message?.includes("interrupted")) {
+          Alert.alert("Connection Error", "The request was interrupted. Please check your connection and try again.");
+        } else {
+          Alert.alert("Scan Error", "Failed to analyze photo. Please try again.");
+        }
         return;
       }
 
@@ -483,9 +511,10 @@ export default function Index() {
         streak_extended: scanData.streakExtended,
       });
     } catch (error) {
-      console.error(error);
+      console.error("Upload error:", error);
       // Remove the loading skeleton in case of error
       setMeals((prev) => prev.filter((meal) => meal.id !== tempId));
+      Alert.alert("Error", "Something went wrong. Please try again.");
       posthog.capture("meal_scan_failed");
     } finally {
       setIsScanning(false);
@@ -828,12 +857,13 @@ export default function Index() {
             </Text>
           ) : (
             meals.map((meal, index) => {
-              if (isScanning && !meal.scanned) {
-                return <MealSkeleton key={index} showCalculating={true} />;
+              // Show skeleton for loading meals
+              if (meal.isLoading || (isScanning && !meal.scanned && meal.name === "")) {
+                return <MealSkeleton key={meal.id || index} showCalculating={true} />;
               }
               return (
                 <TouchableOpacity 
-                  key={index} 
+                  key={meal.id || index} 
                   style={styles.mealItem}
                   onPress={() => handleMealPress(meal)}
                   activeOpacity={0.7}

@@ -34,7 +34,7 @@ export const Weight = ({ onSelect }: WeightProps) => {
         useNativeDriver: true,
       }),
     ]).start();
-  }, []);
+  }, [fadeAnim, scaleAnim]);
 
   const generateWeights = () => {
     const weights = [];
@@ -91,7 +91,10 @@ export const Weight = ({ onSelect }: WeightProps) => {
         <View style={styles.unitSelector}>
           <TouchableOpacity
             onPress={() => handleUnitChange("lbs")}
-            style={styles.unitButton}
+            style={[
+              styles.unitButton,
+              unit === "lbs" && styles.activeUnitBackground,
+            ]}
           >
             <Text
               style={[
@@ -102,10 +105,12 @@ export const Weight = ({ onSelect }: WeightProps) => {
               Imperial
             </Text>
           </TouchableOpacity>
-          <Text style={styles.unitDivider}>|</Text>
           <TouchableOpacity
             onPress={() => handleUnitChange("kg")}
-            style={styles.unitButton}
+            style={[
+              styles.unitButton,
+              unit === "kg" && styles.activeUnitBackground,
+            ]}
           >
             <Text
               style={[
@@ -152,40 +157,56 @@ export const Weight = ({ onSelect }: WeightProps) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    justifyContent: "space-between",
   },
   title: {
-    fontSize: 42,
-    fontFamily: "Platypi",
-    color: "#2A2A2A",
-    marginBottom: "5%",
+    fontSize: 36,
+    color: "#333333",
+    marginBottom: 16,
+    fontWeight: "600",
+  },
+  subtitle: {
+    fontSize: 18,
+    color: "rgba(51, 51, 51, 0.7)",
+    marginBottom: 40,
+    lineHeight: 24,
   },
   unitSelector: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 48,
+    justifyContent: "center",
+    marginBottom: 40,
+    backgroundColor: "rgba(255, 255, 255, 0.4)",
+    borderRadius: 16,
+    padding: 8,
   },
   unitButton: {
-    paddingHorizontal: 16,
+    flex: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 12,
   },
   unitText: {
-    fontSize: 32,
-    fontFamily: "Platypi",
+    fontSize: 18,
+    fontWeight: "600",
+    textAlign: "center",
   },
   activeUnit: {
-    color: "#2A2A2A",
+    color: "#fae5d2",
   },
   inactiveUnit: {
-    color: "#9E9E9E",
+    color: "rgba(51, 51, 51, 0.6)",
   },
-  unitDivider: {
-    fontSize: 32,
-    color: "#9E9E9E",
-    fontFamily: "Platypi",
+  activeUnitBackground: {
+    backgroundColor: "#333333",
   },
   pickerContainer: {
-    height: 180,
+    height: 200,
     position: "relative",
     width: "100%",
+    backgroundColor: "rgba(255, 255, 255, 0.4)",
+    borderRadius: 16,
+    overflow: "hidden",
   },
   pickerContent: {
     flexDirection: "row",
@@ -202,8 +223,11 @@ const styles = StyleSheet.create({
     marginTop: -30,
     height: 60,
     width: "100%",
-    backgroundColor: "rgba(42, 42, 42, 0.05)",
-    borderRadius: 16,
+    backgroundColor: "rgba(51, 51, 51, 0.1)",
+    borderRadius: 12,
+    marginHorizontal: 16,
+    left: 0,
+    right: 0,
   },
   pickerItem: {
     height: 60,
@@ -211,9 +235,9 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   pickerText: {
-    fontSize: 32,
-    fontFamily: "Platypi",
-    color: "#2A2A2A",
+    fontSize: 28,
+    color: "#333333",
+    fontWeight: "600",
   },
   unitLabelContainer: {
     position: "absolute",
@@ -222,21 +246,15 @@ const styles = StyleSheet.create({
     marginTop: -16,
   },
   unitLabel: {
-    fontSize: 32,
-    fontFamily: "Platypi",
-    color: "#2A2A2A",
+    fontSize: 28,
+    color: "#333333",
     marginLeft: 16,
+    fontWeight: "600",
   },
   pickerPadding: {
-    height: 120,
+    height: 140,
   },
   content: {
     flex: 1,
-  },
-  subtitle: {
-    fontSize: 16,
-    fontFamily: "Platypi",
-    color: "#9E9E9E",
-    marginBottom: "5%",
   },
 });
