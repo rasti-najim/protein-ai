@@ -119,9 +119,9 @@ const styles = StyleSheet.create({
     paddingVertical: 20,
     paddingHorizontal: 24,
     borderRadius: 16,
-    backgroundColor: "rgba(255, 255, 255, 0.4)",
+    backgroundColor: "rgba(255, 255, 255, 0.6)",
     borderWidth: 2,
-    borderColor: "transparent",
+    borderColor: "rgba(51, 51, 51, 0.1)",
   },
   selectedOption: {
     backgroundColor: "#333333",
