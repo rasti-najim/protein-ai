@@ -572,6 +572,30 @@ export default function Index() {
     toggleMenu();
   };
 
+  const handleScanMealPress = () => {
+    toggleMenu();
+    Alert.alert("Scan Meal", "How would you like to scan your meal?", [
+      {
+        text: "Take Photo",
+        onPress: () => {
+          Superwall.shared.register("scan_entry").then(() => {
+            router.push("/home/camera");
+          });
+        },
+      },
+      {
+        text: "Upload Photo",
+        onPress: async () => {
+          await handleImagePick();
+        },
+      },
+      {
+        text: "Cancel",
+        style: "cancel",
+      },
+    ]);
+  };
+
   const handleMealPress = async (meal: Meal) => {
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setSelectedMeal({
@@ -717,14 +741,10 @@ export default function Index() {
               onPress: handleManualPress,
             },
             {
-              text: "Upload Photo",
-              icon: "image",
-              onPress: async () => {
-                toggleMenu();
-                await handleImagePick();
-              },
+              text: "Scan Meal",
+              icon: "camera",
+              onPress: handleScanMealPress,
             },
-            { text: "Take Photo", icon: "camera", onPress: handleCameraPress },
           ].map((item, index) => (
             <Animated.View
               key={item.text}
@@ -744,7 +764,7 @@ export default function Index() {
                 style={[
                   styles.fabMenuItem,
                   {
-                    marginBottom: index === 2 ? 0 : 12,
+                    marginBottom: index === 1 ? 0 : 12,
                   },
                 ]}
                 onPress={item.onPress}
