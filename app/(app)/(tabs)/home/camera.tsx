@@ -1,39 +1,89 @@
 import React, { useState, useRef } from "react";
-import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
-import { CameraView, CameraType, useCameraPermissions } from "expo-camera";
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ActivityIndicator,
+} from "react-native";
+import { CameraView, useCameraPermissions } from "expo-camera";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ScanFrame } from "@/components/scan-frame";
 import { useRouter } from "expo-router";
 import { usePhoto } from "@/components/photo-context";
-import { Button } from "@/components/button";
+
 import { SafeAreaView } from "react-native-safe-area-context";
 import { usePostHog } from "posthog-react-native";
+import * as Haptics from "expo-haptics";
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+  withTiming,
+} from "react-native-reanimated";
 
 export default function Page() {
   const insets = useSafeAreaInsets();
   const [permission, requestPermission] = useCameraPermissions();
   const [flash, setFlash] = useState(false);
+  const [isCapturing, setIsCapturing] = useState(false);
   const cameraRef = useRef<CameraView>(null);
   const router = useRouter();
   const { setPhoto } = usePhoto();
   const posthog = usePostHog();
-  const handleCapture = async () => {
-    if (!cameraRef.current) return;
 
-    console.log("Capture pressed");
+  // Animation values
+  const captureScale = useSharedValue(1);
+  const flashOpacity = useSharedValue(0);
+
+  // Animated styles (must be before any conditional returns)
+  const captureButtonAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: captureScale.value }],
+  }));
+
+  const flashAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: flashOpacity.value,
+  }));
+
+  const handleCapture = async () => {
+    if (!cameraRef.current || isCapturing) return;
+
+    setIsCapturing(true);
+
+    // Haptic feedback
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+
+    // Button press animation
+    captureScale.value = withSpring(0.8, { damping: 8 }, () => {
+      captureScale.value = withSpring(1);
+    });
+
+    // Flash effect
+    flashOpacity.value = withTiming(1, { duration: 100 }, () => {
+      flashOpacity.value = withTiming(0, { duration: 200 });
+    });
+
     try {
       const photo = await cameraRef.current.takePictureAsync({
         quality: 1,
         base64: true,
       });
       if (!photo) return;
-      console.log(photo);
+
       setPhoto(photo);
       posthog.capture("user_scanned_meal");
+
+      // Success haptic
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+
       router.dismiss();
     } catch (error) {
       console.error("Error capturing photo", error);
+      // Error haptic
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    } finally {
+      setIsCapturing(false);
     }
   };
 
@@ -44,13 +94,32 @@ export default function Page() {
 
   if (!permission?.granted) {
     return (
-      <View style={styles.container}>
-        <Text style={styles.text}>
-          We need your permission to show the camera
-        </Text>
-        <TouchableOpacity style={styles.button} onPress={requestPermission}>
-          <Text style={styles.buttonText}>Grant Permission</Text>
-        </TouchableOpacity>
+      <View style={styles.permissionContainer}>
+        <View style={styles.permissionContent}>
+          <MaterialCommunityIcons
+            name="camera-outline"
+            size={80}
+            color="#fae5d2"
+            style={styles.permissionIcon}
+          />
+          <Text style={styles.permissionTitle}>Camera Access Required</Text>
+          <Text style={styles.permissionText}>
+            To scan your meals, we need access to your camera. Your photos are
+            processed securely and never stored on our servers.
+          </Text>
+          <TouchableOpacity
+            style={styles.permissionButton}
+            onPress={requestPermission}
+          >
+            <Text style={styles.permissionButtonText}>Enable Camera</Text>
+            <MaterialCommunityIcons
+              name="arrow-right"
+              size={20}
+              color="#333333"
+              style={{ marginLeft: 8 }}
+            />
+          </TouchableOpacity>
+        </View>
       </View>
     );
   }
@@ -63,6 +132,9 @@ export default function Page() {
         facing="back"
         flash={flash ? "on" : "off"}
       >
+        {/* Flash overlay */}
+        <Animated.View style={[styles.flashOverlay, flashAnimatedStyle]} />
+
         <SafeAreaView style={styles.overlay}>
           <View style={styles.header}>
             <TouchableOpacity
@@ -85,22 +157,32 @@ export default function Page() {
             style={[styles.buttonContainer, { paddingBottom: insets.bottom }]}
           >
             <TouchableOpacity
-              style={styles.flashButton}
+              style={[styles.flashButton, flash && styles.flashButtonActive]}
               onPress={() => setFlash(!flash)}
             >
               <MaterialCommunityIcons
                 name={flash ? "flash" : "flash-off"}
                 size={24}
-                color="#fae5d2"
+                color={flash ? "#333333" : "#fae5d2"}
               />
             </TouchableOpacity>
 
-            <TouchableOpacity
-              style={styles.captureButton}
-              onPress={handleCapture}
-            >
-              <View style={styles.captureButtonInner} />
-            </TouchableOpacity>
+            <Animated.View style={captureButtonAnimatedStyle}>
+              <TouchableOpacity
+                style={[
+                  styles.captureButton,
+                  isCapturing && styles.captureButtonDisabled,
+                ]}
+                onPress={handleCapture}
+                disabled={isCapturing}
+              >
+                {isCapturing ? (
+                  <ActivityIndicator size="large" color="#333333" />
+                ) : (
+                  <View style={styles.captureButtonInner} />
+                )}
+              </TouchableOpacity>
+            </Animated.View>
 
             <View style={styles.buttonSpacer} />
           </View>
@@ -114,9 +196,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#000",
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 20,
   },
   overlay: {
     flex: 1,
@@ -130,55 +209,45 @@ const styles = StyleSheet.create({
     marginBottom: 40,
   },
   title: {
-    fontSize: 42,
+    fontSize: 28,
     color: "#fae5d2",
     fontWeight: "700",
     textAlign: "center",
+    textShadowColor: "rgba(0, 0, 0, 0.7)",
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 4,
   },
   scanFrame: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    // marginVertical: 40,
-  },
-  frameImage: {
-    width: "100%",
-    height: "100%",
   },
   captureButton: {
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: "rgba(250, 229, 210, 0.3)",
+    backgroundColor: "rgba(250, 229, 210, 0.2)",
     justifyContent: "center",
     alignItems: "center",
     borderWidth: 4,
     borderColor: "#fae5d2",
+    shadowColor: "#fae5d2",
+    shadowOffset: {
+      width: 0,
+      height: 0,
+    },
+    shadowOpacity: 0.5,
+    shadowRadius: 10,
+    elevation: 10,
+  },
+  captureButtonDisabled: {
+    opacity: 0.7,
   },
   captureButtonInner: {
     width: 60,
     height: 60,
     borderRadius: 30,
     backgroundColor: "#fae5d2",
-  },
-  text: {
-    fontSize: 20,
-    color: "#fae5d2",
-    fontWeight: "500",
-    textAlign: "center",
-    marginBottom: 20,
-  },
-  button: {
-    backgroundColor: "#333333",
-    padding: 16,
-    borderRadius: 16,
-    alignItems: "center",
-    minWidth: 200,
-  },
-  buttonText: {
-    color: "#fae5d2",
-    fontSize: 20,
-    fontWeight: "600",
   },
   buttonContainer: {
     flexDirection: "row",
@@ -192,22 +261,87 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: "#333333",
+    backgroundColor: "rgba(51, 51, 51, 0.8)",
     justifyContent: "center",
     alignItems: "center",
+    borderWidth: 2,
+    borderColor: "rgba(250, 229, 210, 0.3)",
+  },
+  flashButtonActive: {
+    backgroundColor: "#fae5d2",
+    borderColor: "#fae5d2",
   },
   buttonSpacer: {
-    width: 48, // Same as flashButton width for symmetry
+    width: 48,
   },
   closeButton: {
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: "#333333",
+    backgroundColor: "rgba(51, 51, 51, 0.8)",
     justifyContent: "center",
     alignItems: "center",
+    borderWidth: 2,
+    borderColor: "rgba(250, 229, 210, 0.3)",
   },
   headerSpacer: {
-    width: 48, // Same width as closeButton for symmetry
+    width: 48,
+  },
+  flashOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "#ffffff",
+    zIndex: 1000,
+  },
+  // Permission screen styles
+  permissionContainer: {
+    flex: 1,
+    backgroundColor: "#000",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 20,
+  },
+  permissionContent: {
+    alignItems: "center",
+    maxWidth: 300,
+  },
+  permissionIcon: {
+    marginBottom: 24,
+    opacity: 0.8,
+  },
+  permissionTitle: {
+    fontSize: 24,
+    color: "#fae5d2",
+    fontWeight: "700",
+    textAlign: "center",
+    marginBottom: 16,
+  },
+  permissionText: {
+    fontSize: 16,
+    color: "rgba(250, 229, 210, 0.8)",
+    textAlign: "center",
+    lineHeight: 24,
+    marginBottom: 32,
+  },
+  permissionButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#fae5d2",
+    paddingVertical: 16,
+    paddingHorizontal: 32,
+    borderRadius: 16,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  permissionButtonText: {
+    color: "#333333",
+    fontSize: 18,
+    fontWeight: "600",
   },
 });
