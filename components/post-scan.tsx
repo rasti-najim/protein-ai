@@ -67,13 +67,13 @@ export const PostScan = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#FCE9BC",
+    backgroundColor: "#fae5d2",
     paddingHorizontal: 20,
   },
   title: {
     fontSize: 42,
-    fontFamily: "Platypi",
-    color: "#2A2A2A",
+    color: "#333333",
+    fontWeight: "700",
     marginBottom: 40,
   },
   content: {
@@ -86,13 +86,13 @@ const styles = StyleSheet.create({
   },
   proteinAmount: {
     fontSize: 64,
-    fontFamily: "Platypi",
-    color: "#2A2A2A",
+    color: "#333333",
+    fontWeight: "600",
   },
   proteinLabel: {
     fontSize: 24,
-    fontFamily: "Platypi",
-    color: "#2A2A2A",
+    color: "#333333",
+    fontWeight: "500",
     marginBottom: 8,
   },
   iconContainer: {
@@ -105,8 +105,8 @@ const styles = StyleSheet.create({
   },
   foodName: {
     fontSize: 32,
-    fontFamily: "Platypi",
-    color: "#2A2A2A",
+    color: "#333333",
+    fontWeight: "600",
     marginTop: 40,
     textAlign: "center",
   },
@@ -124,15 +124,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   buttonText: {
-    color: "#FCE9BC",
+    color: "#fae5d2",
     fontSize: 20,
-    fontFamily: "Platypi",
     fontWeight: "600",
   },
   primaryButton: {
     backgroundColor: "#333333",
   },
   primaryButtonText: {
-    color: "#FCE9BC",
+    color: "#fae5d2",
   },
 });

@@ -138,8 +138,8 @@ const styles = StyleSheet.create({
   },
   historyDate: {
     fontSize: 32,
-    fontFamily: "Platypi",
-    color: "#2A2A2A",
+    color: "#333333",
+    fontWeight: "600",
   },
   mealItem: {
     flexDirection: "row",
@@ -147,7 +147,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: "rgba(42, 42, 42, 0.1)",
+    borderBottomColor: "rgba(51, 51, 51, 0.1)",
   },
   mealInfo: {
     flex: 1,
@@ -158,8 +158,8 @@ const styles = StyleSheet.create({
   },
   mealName: {
     fontSize: 20,
-    fontFamily: "Platypi",
-    color: "#2A2A2A",
+    color: "#333333",
+    fontWeight: "500",
     flex: 1,
     lineHeight: 24,
   },
@@ -171,14 +171,12 @@ const styles = StyleSheet.create({
   },
   proteinText: {
     fontSize: 16,
-    fontFamily: "Platypi",
-    color: "#FCE9BC",
+    color: "#fae5d2",
     fontWeight: "600",
   },
   mealTime: {
     fontSize: 16,
-    fontFamily: "Platypi",
-    color: "#666666",
+    color: "rgba(51, 51, 51, 0.7)",
     flexShrink: 0,
   },
 });

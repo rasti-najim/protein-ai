@@ -1,7 +1,6 @@
 import React, { useMemo, useEffect, useState } from "react";
 import { View, Text, StyleSheet, Dimensions } from "react-native";
 import { Button } from "@/components/button";
-import { Image } from "expo-image";
 import { DateTime } from "luxon";
 import { FontAwesome6 } from "@expo/vector-icons";
 import Animated, { FadeInUp, FadeInDown } from "react-native-reanimated";
@@ -26,7 +25,10 @@ export const Streak = ({
 }: StreakProps) => {
   const { data: streakData, isLoading, error } = useStreakQuery();
   const { user } = useAuth();
-  const [todayProgress, setTodayProgress] = useState<{ current: number; goal: number } | null>(null);
+  const [todayProgress, setTodayProgress] = useState<{
+    current: number;
+    goal: number;
+  } | null>(null);
 
   const dayLabels = useMemo(() => ["S", "M", "T", "W", "T", "F", "S"], []);
 
@@ -49,13 +51,16 @@ export const Streak = ({
             .from("users")
             .select("daily_protein_target")
             .eq("id", user.id)
-            .single()
+            .single(),
         ]);
 
         if (mealsResult.data && userResult.data) {
-          const currentProtein = mealsResult.data.reduce((sum, meal) => sum + (meal.protein_amount || 0), 0);
+          const currentProtein = mealsResult.data.reduce(
+            (sum, meal) => sum + (meal.protein_amount || 0),
+            0
+          );
           const dailyGoal = userResult.data.daily_protein_target || 200;
-          
+
           setTodayProgress({ current: currentProtein, goal: dailyGoal });
         }
       } catch (error) {
@@ -93,11 +98,6 @@ export const Streak = ({
   if (isLoading) {
     return (
       <View style={styles.container}>
-        <Image
-          source={require("@/assets/images/background.png")}
-          style={styles.background}
-          contentFit="cover"
-        />
         <View style={[styles.content, styles.loadingContainer]}>
           <Text style={styles.loadingText}>Loading your streak...</Text>
         </View>
@@ -108,14 +108,13 @@ export const Streak = ({
   if (error) {
     return (
       <View style={styles.container}>
-        <Image
-          source={require("@/assets/images/background.png")}
-          style={styles.background}
-          contentFit="cover"
-        />
         <View style={[styles.content, styles.loadingContainer]}>
           <Text style={styles.loadingText}>Failed to load streak data</Text>
-          <Button style={styles.closeButton} onPress={onClose} variant="primary">
+          <Button
+            style={styles.closeButton}
+            onPress={onClose}
+            variant="primary"
+          >
             Close
           </Button>
         </View>
@@ -125,11 +124,6 @@ export const Streak = ({
 
   return (
     <View style={styles.container}>
-      <Image
-        source={require("@/assets/images/background.png")}
-        style={styles.background}
-        contentFit="cover"
-      />
       <View style={styles.content}>
         <Animated.View entering={FadeInUp.delay(200)} style={styles.header}>
           <View style={styles.titleContainer}>
@@ -165,13 +159,15 @@ export const Streak = ({
         >
           <View style={styles.weekRow}>
             {streakData?.dailyBreakdown.map((d, idx) => {
-              const isToday = idx === (streakData?.dailyBreakdown.length || 0) - 1;
-              
+              const isToday =
+                idx === (streakData?.dailyBreakdown.length || 0) - 1;
+
               // For today, use real-time progress if available
-              const hitGoal = isToday && todayProgress 
-                ? todayProgress.current >= todayProgress.goal 
-                : d.hitGoal;
-              
+              const hitGoal =
+                isToday && todayProgress
+                  ? todayProgress.current >= todayProgress.goal
+                  : d.hitGoal;
+
               const delay = 700 + idx * 100; // Staggered animation
               return (
                 <Animated.View
@@ -231,10 +227,8 @@ export const Streak = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: "#fae5d2",
     justifyContent: "center",
-  },
-  background: {
-    ...StyleSheet.absoluteFillObject,
   },
   content: {
     flex: 1,
@@ -254,8 +248,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 36,
-    fontFamily: "Platypi",
-    color: "#2A2A2A",
+    color: "#333333",
     fontWeight: "600",
   },
   levelBadge: {
@@ -264,12 +257,11 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 20,
     borderWidth: 2,
-    borderColor: "#2A2A2A",
+    borderColor: "#333333",
   },
   levelText: {
     fontSize: 16,
-    fontFamily: "Platypi",
-    color: "#2A2A2A",
+    color: "#333333",
     fontWeight: "600",
   },
   streakDisplay: {
@@ -290,22 +282,19 @@ const styles = StyleSheet.create({
   },
   streakNumber: {
     fontSize: 72,
-    fontFamily: "Platypi",
     color: "#FF6B35",
     fontWeight: "700",
     lineHeight: 72,
   },
   streakLabel: {
     fontSize: 24,
-    fontFamily: "Platypi",
     color: "#FF6B35",
     fontWeight: "500",
     marginTop: 4,
   },
   streakMessage: {
     fontSize: 20,
-    fontFamily: "Platypi",
-    color: "#2A2A2A",
+    color: "#333333",
     textAlign: "center",
     fontWeight: "500",
   },
@@ -316,8 +305,7 @@ const styles = StyleSheet.create({
   },
   subheading: {
     fontSize: 24,
-    fontFamily: "Platypi",
-    color: "#2A2A2A",
+    color: "#333333",
     marginBottom: 20,
     fontWeight: "600",
   },
@@ -338,7 +326,7 @@ const styles = StyleSheet.create({
     height: Math.min(40, Math.max(28, screenWidth / 12)),
     borderRadius: Math.min(20, Math.max(14, screenWidth / 24)),
     borderWidth: 2,
-    borderColor: "#2A2A2A",
+    borderColor: "#333333",
     justifyContent: "center",
     alignItems: "center",
   },
@@ -347,8 +335,8 @@ const styles = StyleSheet.create({
     borderColor: "#7FEA71",
   },
   dayMiss: {
-    backgroundColor: "rgba(42, 42, 42, 0.1)",
-    borderColor: "#2A2A2A",
+    backgroundColor: "rgba(51, 51, 51, 0.1)",
+    borderColor: "#333333",
   },
   todayCircle: {
     borderWidth: 3,
@@ -363,12 +351,11 @@ const styles = StyleSheet.create({
   },
   dayLabel: {
     fontSize: 16,
-    fontFamily: "Platypi",
-    color: "#666666",
+    color: "rgba(51, 51, 51, 0.7)",
     fontWeight: "500",
   },
   todayLabel: {
-    color: "#2A2A2A",
+    color: "#333333",
     fontWeight: "600",
   },
   dayLabelHit: {
@@ -381,8 +368,7 @@ const styles = StyleSheet.create({
   },
   motivationalText: {
     fontSize: 18,
-    fontFamily: "Platypi",
-    color: "#2A2A2A",
+    color: "#333333",
     textAlign: "center",
     marginBottom: 32,
     lineHeight: 24,
@@ -398,8 +384,8 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     fontSize: 20,
-    fontFamily: "Platypi",
-    color: "#2A2A2A",
+    color: "#333333",
     textAlign: "center",
+    fontWeight: "500",
   },
 });

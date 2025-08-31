@@ -27,23 +27,28 @@ export default function Manual() {
   const [proteinAmount, setProteinAmount] = useState("");
   const [mealDescription, setMealDescription] = useState("");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [entryMode, setEntryMode] = useState<'description' | 'manual'>('description');
+  const [entryMode, setEntryMode] = useState<"description" | "manual">(
+    "description"
+  );
   const router = useRouter();
   const posthog = usePostHog();
 
   const analyzeDescription = async () => {
     if (!mealDescription.trim()) return;
-    
+
     Keyboard.dismiss(); // Dismiss keyboard when analysis starts
     setIsAnalyzing(true);
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    
+
     try {
-      const { data, error } = await supabase.functions.invoke("analyze-meal-description", {
-        body: {
-          description: mealDescription.trim(),
-        },
-      });
+      const { data, error } = await supabase.functions.invoke(
+        "analyze-meal-description",
+        {
+          body: {
+            description: mealDescription.trim(),
+          },
+        }
+      );
 
       if (error) {
         console.error("Error analyzing meal:", error);
@@ -63,7 +68,7 @@ export default function Manual() {
         // The edge function returns additional streak data along with meal analysis
         setMealName(data.meal_name || "");
         setProteinAmount(data.protein_g ? data.protein_g.toString() : "");
-        setEntryMode('manual');
+        setEntryMode("manual");
         posthog.capture("meal_description_analyzed", {
           description_length: mealDescription.length,
           meal_name: data.meal_name,
@@ -87,7 +92,7 @@ export default function Manual() {
         protein_amount: Number(proteinAmount),
         user_id: user?.id!,
         created_at: DateTime.now().toISO(),
-        logging_method: 'manual_entry', // Both description and manual input are considered manual entry
+        logging_method: "manual_entry", // Both description and manual input are considered manual entry
       });
       posthog.capture("user_entered_manually", {
         meal_name: mealName,
@@ -121,52 +126,56 @@ export default function Manual() {
             <TouchableOpacity
               style={[
                 styles.toggleButton,
-                entryMode === 'description' && styles.toggleButtonActive,
+                entryMode === "description" && styles.toggleButtonActive,
               ]}
               onPress={async () => {
                 await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                setEntryMode('description');
+                setEntryMode("description");
               }}
             >
-              <FontAwesome6 
-                name="wand-magic-sparkles" 
-                size={16} 
-                color={entryMode === 'description' ? "#FCE9BC" : "#2A2A2A"} 
+              <FontAwesome6
+                name="wand-magic-sparkles"
+                size={16}
+                color={entryMode === "description" ? "#fae5d2" : "#333333"}
               />
-              <Text style={[
-                styles.toggleText,
-                entryMode === 'description' && styles.toggleTextActive,
-              ]}>
+              <Text
+                style={[
+                  styles.toggleText,
+                  entryMode === "description" && styles.toggleTextActive,
+                ]}
+              >
                 Describe Meal
               </Text>
             </TouchableOpacity>
-            
+
             <TouchableOpacity
               style={[
                 styles.toggleButton,
-                entryMode === 'manual' && styles.toggleButtonActive,
+                entryMode === "manual" && styles.toggleButtonActive,
               ]}
               onPress={async () => {
                 await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                setEntryMode('manual');
+                setEntryMode("manual");
               }}
             >
-              <FontAwesome6 
-                name="keyboard" 
-                size={16} 
-                color={entryMode === 'manual' ? "#FCE9BC" : "#2A2A2A"} 
+              <FontAwesome6
+                name="keyboard"
+                size={16}
+                color={entryMode === "manual" ? "#fae5d2" : "#333333"}
               />
-              <Text style={[
-                styles.toggleText,
-                entryMode === 'manual' && styles.toggleTextActive,
-              ]}>
+              <Text
+                style={[
+                  styles.toggleText,
+                  entryMode === "manual" && styles.toggleTextActive,
+                ]}
+              >
                 Manual Entry
               </Text>
             </TouchableOpacity>
           </View>
 
           <View style={styles.inputContainer}>
-            {entryMode === 'description' ? (
+            {entryMode === "description" ? (
               <>
                 <Text style={styles.label}>Describe Your Meal</Text>
                 <TextInput
@@ -174,23 +183,28 @@ export default function Manual() {
                   value={mealDescription}
                   onChangeText={setMealDescription}
                   placeholder="e.g. I had a grilled chicken breast with some rice and broccoli"
-                  placeholderTextColor="#666666"
+                  placeholderTextColor="rgba(51, 51, 51, 0.7)"
                   multiline
                   numberOfLines={4}
                   textAlignVertical="top"
                 />
-                
+
                 <Button
-                  style={[styles.analyzeButton, !canAnalyze && styles.buttonDisabled]}
+                  style={[
+                    styles.analyzeButton,
+                    !canAnalyze && styles.buttonDisabled,
+                  ]}
                   onPress={analyzeDescription}
                   disabled={!canAnalyze}
                 >
                   {isAnalyzing ? (
-                    <ActivityIndicator size="small" color="#FCE9BC" />
+                    <ActivityIndicator size="small" color="#fae5d2" />
                   ) : (
                     <View style={styles.analyzeButtonContent}>
-                      <FontAwesome6 name="star" size={16} color="#2A2A2A" />
-                      <Text style={styles.analyzeButtonText}>Analyze with AI</Text>
+                      <FontAwesome6 name="star" size={16} color="#333333" />
+                      <Text style={styles.analyzeButtonText}>
+                        Analyze with AI
+                      </Text>
                     </View>
                   )}
                 </Button>
@@ -203,7 +217,7 @@ export default function Manual() {
                   value={mealName}
                   onChangeText={setMealName}
                   placeholder="e.g. Chicken Breast"
-                  placeholderTextColor="#666666"
+                  placeholderTextColor="rgba(51, 51, 51, 0.7)"
                 />
 
                 <Text style={styles.label}>Protein Amount (g)</Text>
@@ -212,7 +226,7 @@ export default function Manual() {
                   value={proteinAmount}
                   onChangeText={setProteinAmount}
                   placeholder="e.g. 30"
-                  placeholderTextColor="#666666"
+                  placeholderTextColor="rgba(51, 51, 51, 0.7)"
                   keyboardType="numeric"
                 />
               </>
@@ -237,46 +251,45 @@ export default function Manual() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#FCE9BC",
+    backgroundColor: "#fae5d2",
     padding: 20,
   },
   title: {
     fontSize: 42,
-    fontFamily: "Platypi",
-    color: "#2A2A2A",
+    color: "#333333",
+    fontWeight: "700",
     marginBottom: 40,
   },
   content: {
     flex: 1,
   },
   toggleContainer: {
-    flexDirection: 'row',
-    backgroundColor: "rgba(42, 42, 42, 0.1)",
+    flexDirection: "row",
+    backgroundColor: "rgba(51, 51, 51, 0.1)",
     borderRadius: 16,
     padding: 4,
     marginBottom: 24,
   },
   toggleButton: {
     flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     gap: 8,
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderRadius: 12,
   },
   toggleButtonActive: {
-    backgroundColor: "#2A2A2A",
+    backgroundColor: "#333333",
   },
   toggleText: {
     fontSize: 16,
-    fontFamily: "Platypi",
-    color: "#2A2A2A",
+    color: "#333333",
     fontWeight: "500",
   },
   toggleTextActive: {
-    color: "#FCE9BC",
+    color: "#fae5d2",
     fontWeight: "600",
   },
   inputContainer: {
@@ -284,17 +297,16 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 20,
-    fontFamily: "Platypi",
-    color: "#2A2A2A",
+    color: "#333333",
+    fontWeight: "500",
     marginBottom: 8,
   },
   input: {
-    backgroundColor: "rgba(42, 42, 42, 0.05)",
+    backgroundColor: "rgba(51, 51, 51, 0.05)",
     borderRadius: 16,
     padding: 16,
     fontSize: 20,
-    fontFamily: "Platypi",
-    color: "#2A2A2A",
+    color: "#333333",
     borderWidth: 2,
     borderColor: "transparent",
   },
@@ -309,17 +321,16 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     alignItems: "center",
     borderWidth: 2,
-    borderColor: "#2A2A2A",
+    borderColor: "#333333",
   },
   analyzeButtonContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 8,
   },
   analyzeButtonText: {
     fontSize: 18,
-    fontFamily: "Platypi",
-    color: "#2A2A2A",
+    color: "#333333",
     fontWeight: "600",
   },
   buttonContainer: {
@@ -331,12 +342,11 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     alignItems: "center",
     borderWidth: 2,
-    borderColor: "#2A2A2A",
+    borderColor: "#333333",
   },
   buttonText: {
-    color: "#FCE9BC",
+    color: "#fae5d2",
     fontSize: 20,
-    fontFamily: "Platypi",
     fontWeight: "600",
   },
   buttonDisabled: {

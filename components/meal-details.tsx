@@ -20,7 +20,7 @@ export interface MealDetailsData {
   name: string;
   protein: number;
   scanned?: boolean; // Keep for backward compatibility
-  logging_method?: 'photo_scan' | 'manual_entry';
+  logging_method?: "photo_scan" | "manual_entry";
   created_at: string;
 }
 
@@ -33,12 +33,19 @@ interface MealDetailsProps {
   onMealUpdated?: (updatedMeal: MealDetailsData) => void;
 }
 
-export const MealDetails = ({ meal, visible, onClose, onEdit, onDelete, onMealUpdated }: MealDetailsProps) => {
+export const MealDetails = ({
+  meal,
+  visible,
+  onClose,
+  onEdit,
+  onDelete,
+  onMealUpdated,
+}: MealDetailsProps) => {
   // Helper function to determine if meal is photo-based
   const isPhotoMeal = (meal: MealDetailsData) => {
     // Use new logging_method field if available, fallback to scanned for backward compatibility
     if (meal.logging_method) {
-      return meal.logging_method === 'photo_scan';
+      return meal.logging_method === "photo_scan";
     }
     return meal.scanned || false;
   };
@@ -55,7 +62,7 @@ export const MealDetails = ({ meal, visible, onClose, onEdit, onDelete, onMealUp
       setEditedName(meal.name);
       setEditedProtein(meal.protein.toString());
       setIsEditMode(false);
-      
+
       Animated.parallel([
         Animated.spring(scaleAnim, {
           toValue: 1,
@@ -90,10 +97,10 @@ export const MealDetails = ({ meal, visible, onClose, onEdit, onDelete, onMealUp
 
   const handleSave = async () => {
     if (!meal || !editedName.trim() || isNaN(Number(editedProtein))) return;
-    
+
     setIsSaving(true);
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    
+
     try {
       const { error } = await supabase
         .from("meals")
@@ -102,22 +109,22 @@ export const MealDetails = ({ meal, visible, onClose, onEdit, onDelete, onMealUp
           protein_amount: Number(editedProtein),
         })
         .eq("id", meal.id);
-      
+
       if (error) {
         Alert.alert("Error", "Failed to update meal. Please try again.");
         return;
       }
-      
+
       const updatedMeal = {
         ...meal,
         name: editedName.trim(),
         protein: Number(editedProtein),
       };
-      
+
       if (onMealUpdated) {
         onMealUpdated(updatedMeal);
       }
-      
+
       setIsEditMode(false);
     } catch (error) {
       console.error("Error updating meal:", error);
@@ -154,9 +161,9 @@ export const MealDetails = ({ meal, visible, onClose, onEdit, onDelete, onMealUp
   const formatDate = (dateString: string) => {
     try {
       const date = DateTime.fromISO(dateString);
-      const today = DateTime.now().startOf('day');
-      const mealDate = date.startOf('day');
-      
+      const today = DateTime.now().startOf("day");
+      const mealDate = date.startOf("day");
+
       if (mealDate.equals(today)) {
         return "Today";
       } else if (mealDate.equals(today.minus({ days: 1 }))) {
@@ -189,10 +196,10 @@ export const MealDetails = ({ meal, visible, onClose, onEdit, onDelete, onMealUp
           {/* Header */}
           <View style={styles.header}>
             <View style={styles.mealIconContainer}>
-              <FontAwesome6 
-                name={isPhotoMeal(meal) ? "camera" : "pen"} 
-                size={24} 
-                color="#FF6B35" 
+              <FontAwesome6
+                name={isPhotoMeal(meal) ? "camera" : "pen"}
+                size={24}
+                color="#FF6B35"
               />
             </View>
             <TouchableOpacity style={styles.closeButton} onPress={handleClose}>
@@ -212,7 +219,7 @@ export const MealDetails = ({ meal, visible, onClose, onEdit, onDelete, onMealUp
                   placeholder="Enter meal name"
                   placeholderTextColor="#666666"
                 />
-                
+
                 <Text style={styles.editLabel}>Protein Amount</Text>
                 <View style={styles.proteinInputContainer}>
                   <TextInput
@@ -229,7 +236,7 @@ export const MealDetails = ({ meal, visible, onClose, onEdit, onDelete, onMealUp
             ) : (
               <>
                 <Text style={styles.mealName}>{meal.name}</Text>
-                
+
                 <View style={styles.proteinContainer}>
                   <View style={styles.proteinBadge}>
                     <FontAwesome6 name="dumbbell" size={16} color="#FCE9BC" />
@@ -243,19 +250,23 @@ export const MealDetails = ({ meal, visible, onClose, onEdit, onDelete, onMealUp
             <View style={styles.metaInfo}>
               <View style={styles.metaItem}>
                 <FontAwesome6 name="clock" size={14} color="#666666" />
-                <Text style={styles.metaText}>{formatTime(meal.created_at)}</Text>
+                <Text style={styles.metaText}>
+                  {formatTime(meal.created_at)}
+                </Text>
               </View>
-              
+
               <View style={styles.metaItem}>
                 <FontAwesome6 name="calendar" size={14} color="#666666" />
-                <Text style={styles.metaText}>{formatDate(meal.created_at)}</Text>
+                <Text style={styles.metaText}>
+                  {formatDate(meal.created_at)}
+                </Text>
               </View>
-              
+
               <View style={styles.metaItem}>
-                <FontAwesome6 
-                  name={isPhotoMeal(meal) ? "camera" : "pen"} 
-                  size={14} 
-                  color="#666666" 
+                <FontAwesome6
+                  name={isPhotoMeal(meal) ? "camera" : "pen"}
+                  size={14}
+                  color="#666666"
                 />
                 <Text style={styles.metaText}>
                   {isPhotoMeal(meal) ? "Photo scanned" : "Manual entry"}
@@ -267,22 +278,27 @@ export const MealDetails = ({ meal, visible, onClose, onEdit, onDelete, onMealUp
           {/* Footer */}
           {isEditMode ? (
             <View style={styles.editActions}>
-              <TouchableOpacity 
-                style={styles.cancelButton} 
+              <TouchableOpacity
+                style={styles.cancelButton}
                 onPress={handleCancel}
                 disabled={isSaving}
               >
                 <FontAwesome6 name="xmark" size={16} color="#FF6B6B" />
                 <Text style={styles.cancelButtonText}>Cancel</Text>
               </TouchableOpacity>
-              
-              <TouchableOpacity 
+
+              <TouchableOpacity
                 style={[
-                  styles.saveButton, 
-                  (!editedName.trim() || isNaN(Number(editedProtein)) || isSaving) && styles.buttonDisabled
-                ]} 
+                  styles.saveButton,
+                  (!editedName.trim() ||
+                    isNaN(Number(editedProtein)) ||
+                    isSaving) &&
+                    styles.buttonDisabled,
+                ]}
                 onPress={handleSave}
-                disabled={!editedName.trim() || isNaN(Number(editedProtein)) || isSaving}
+                disabled={
+                  !editedName.trim() || isNaN(Number(editedProtein)) || isSaving
+                }
               >
                 {isSaving ? (
                   <ActivityIndicator size="small" color="#FCE9BC" />
@@ -297,17 +313,23 @@ export const MealDetails = ({ meal, visible, onClose, onEdit, onDelete, onMealUp
           ) : (
             <>
               <View style={styles.actionButtons}>
-                <TouchableOpacity style={styles.deleteButton} onPress={handleDelete}>
+                <TouchableOpacity
+                  style={styles.deleteButton}
+                  onPress={handleDelete}
+                >
                   <FontAwesome6 name="trash" size={16} color="#FF6B6B" />
                   <Text style={styles.deleteButtonText}>Delete</Text>
                 </TouchableOpacity>
-                
-                <TouchableOpacity style={styles.editButton} onPress={handleEdit}>
+
+                <TouchableOpacity
+                  style={styles.editButton}
+                  onPress={handleEdit}
+                >
                   <FontAwesome6 name="pen" size={16} color="#2A2A2A" />
                   <Text style={styles.editButtonText}>Edit</Text>
                 </TouchableOpacity>
               </View>
-              
+
               <TouchableOpacity style={styles.okButton} onPress={handleClose}>
                 <Text style={styles.okButtonText}>Done</Text>
               </TouchableOpacity>
@@ -328,13 +350,13 @@ const styles = StyleSheet.create({
     padding: 24,
   },
   container: {
-    backgroundColor: "#FCE9BC",
+    backgroundColor: "#fae5d2",
     borderRadius: 24,
     padding: 24,
     width: "100%",
     maxWidth: 360,
     borderWidth: 2,
-    borderColor: "#2A2A2A",
+    borderColor: "#333333",
   },
   header: {
     flexDirection: "row",
@@ -356,7 +378,7 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: "rgba(42, 42, 42, 0.1)",
+    backgroundColor: "rgba(51, 51, 51, 0.1)",
     justifyContent: "center",
     alignItems: "center",
   },
@@ -366,8 +388,7 @@ const styles = StyleSheet.create({
   },
   mealName: {
     fontSize: 28,
-    fontFamily: "Platypi",
-    color: "#2A2A2A",
+    color: "#333333",
     fontWeight: "600",
     textAlign: "center",
     marginBottom: 20,
@@ -386,19 +407,17 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderRadius: 20,
     borderWidth: 2,
-    borderColor: "#2A2A2A",
+    borderColor: "#333333",
     marginBottom: 8,
   },
   proteinAmount: {
     fontSize: 24,
-    fontFamily: "Platypi",
-    color: "#FCE9BC",
+    color: "#fae5d2",
     fontWeight: "600",
   },
   proteinLabel: {
     fontSize: 16,
-    fontFamily: "Platypi",
-    color: "#666666",
+    color: "rgba(51, 51, 51, 0.7)",
     fontWeight: "500",
   },
   metaInfo: {
@@ -411,13 +430,12 @@ const styles = StyleSheet.create({
     gap: 8,
     paddingVertical: 8,
     paddingHorizontal: 12,
-    backgroundColor: "rgba(42, 42, 42, 0.05)",
+    backgroundColor: "rgba(51, 51, 51, 0.05)",
     borderRadius: 12,
   },
   metaText: {
     fontSize: 16,
-    fontFamily: "Platypi",
-    color: "#666666",
+    color: "rgba(51, 51, 51, 0.7)",
     fontWeight: "500",
   },
   actionButtons: {
@@ -440,7 +458,6 @@ const styles = StyleSheet.create({
   },
   deleteButtonText: {
     fontSize: 16,
-    fontFamily: "Platypi",
     color: "#FF6B6B",
     fontWeight: "600",
   },
@@ -450,17 +467,16 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: 8,
-    backgroundColor: "rgba(42, 42, 42, 0.1)",
+    backgroundColor: "rgba(51, 51, 51, 0.1)",
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderRadius: 12,
     borderWidth: 2,
-    borderColor: "#2A2A2A",
+    borderColor: "#333333",
   },
   editButtonText: {
     fontSize: 16,
-    fontFamily: "Platypi",
-    color: "#2A2A2A",
+    color: "#333333",
     fontWeight: "600",
   },
   okButton: {
@@ -470,12 +486,11 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     alignItems: "center",
     borderWidth: 2,
-    borderColor: "#2A2A2A",
+    borderColor: "#333333",
   },
   okButtonText: {
     fontSize: 18,
-    fontFamily: "Platypi",
-    color: "#2A2A2A",
+    color: "#333333",
     fontWeight: "600",
   },
   editContainer: {
@@ -485,20 +500,18 @@ const styles = StyleSheet.create({
   },
   editLabel: {
     fontSize: 18,
-    fontFamily: "Platypi",
-    color: "#2A2A2A",
+    color: "#333333",
     fontWeight: "600",
     marginBottom: 8,
   },
   editInput: {
-    backgroundColor: "rgba(42, 42, 42, 0.05)",
+    backgroundColor: "rgba(51, 51, 51, 0.05)",
     borderRadius: 12,
     padding: 16,
     fontSize: 18,
-    fontFamily: "Platypi",
-    color: "#2A2A2A",
+    color: "#333333",
     borderWidth: 2,
-    borderColor: "#2A2A2A",
+    borderColor: "#333333",
   },
   proteinInputContainer: {
     flexDirection: "row",
@@ -507,8 +520,7 @@ const styles = StyleSheet.create({
   },
   proteinUnit: {
     fontSize: 18,
-    fontFamily: "Platypi",
-    color: "#2A2A2A",
+    color: "#333333",
     fontWeight: "600",
   },
   editActions: {
@@ -531,7 +543,6 @@ const styles = StyleSheet.create({
   },
   cancelButtonText: {
     fontSize: 16,
-    fontFamily: "Platypi",
     color: "#FF6B6B",
     fontWeight: "600",
   },
@@ -546,12 +557,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     borderRadius: 12,
     borderWidth: 2,
-    borderColor: "#2A2A2A",
+    borderColor: "#333333",
   },
   saveButtonText: {
     fontSize: 16,
-    fontFamily: "Platypi",
-    color: "#2A2A2A",
+    color: "#333333",
     fontWeight: "600",
   },
   buttonDisabled: {

@@ -6,7 +6,6 @@ import {
   Linking,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Image } from "expo-image";
 import { FontAwesome6 } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { useRouter } from "expo-router";
@@ -21,17 +20,12 @@ export default function Subscription() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <Image
-        source={require("@/assets/images/background.png")}
-        style={styles.background}
-        contentFit="cover"
-      />
+    <View style={styles.container}>
+      <SafeAreaView style={styles.safeArea}>
+        <Text style={styles.title}>Subscription</Text>
 
-      <Text style={styles.title}>Subscription</Text>
-
-      <View style={styles.content}>
-        {/* <View style={styles.subscriptionInfo}>
+        <View style={styles.content}>
+          {/* <View style={styles.subscriptionInfo}>
           <FontAwesome6 name="crown" size={32} color="#FFD700" />
           <Text style={styles.planName}>Premium Plan</Text>
           <Text style={styles.planDescription}>
@@ -39,28 +33,31 @@ export default function Subscription() {
           </Text>
         </View> */}
 
-        <Button style={styles.manageButton} onPress={handleManageSubscription}>
-          <Text style={styles.manageButtonText}>Manage Subscription</Text>
-        </Button>
-      </View>
-    </SafeAreaView>
+          <Button
+            style={styles.manageButton}
+            onPress={handleManageSubscription}
+          >
+            <Text style={styles.manageButtonText}>Manage Subscription</Text>
+          </Button>
+        </View>
+      </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#FCE9BC",
-    padding: 20,
+    backgroundColor: "#fae5d2",
   },
-  background: {
-    ...StyleSheet.absoluteFillObject,
-    zIndex: -1,
+  safeArea: {
+    flex: 1,
+    padding: 20,
   },
   title: {
     fontSize: 42,
-    fontFamily: "Platypi",
-    color: "#2A2A2A",
+    color: "#333333",
+    fontWeight: "700",
     marginBottom: 40,
   },
   content: {
@@ -69,21 +66,20 @@ const styles = StyleSheet.create({
   subscriptionInfo: {
     alignItems: "center",
     padding: 24,
-    backgroundColor: "rgba(42, 42, 42, 0.05)",
+    backgroundColor: "rgba(51, 51, 51, 0.05)",
     borderRadius: 16,
     marginBottom: 24,
   },
   planName: {
     fontSize: 32,
-    fontFamily: "Platypi",
-    color: "#2A2A2A",
+    color: "#333333",
+    fontWeight: "600",
     marginTop: 16,
     marginBottom: 8,
   },
   planDescription: {
     fontSize: 20,
-    fontFamily: "Platypi",
-    color: "#666666",
+    color: "rgba(51, 51, 51, 0.7)",
     textAlign: "center",
     lineHeight: 28,
   },
@@ -94,9 +90,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   manageButtonText: {
-    color: "#FCE9BC",
+    color: "#fae5d2",
     fontSize: 20,
-    fontFamily: "Platypi",
     fontWeight: "600",
   },
 });

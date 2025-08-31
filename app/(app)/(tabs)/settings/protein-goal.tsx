@@ -15,7 +15,6 @@ import { useRouter } from "expo-router";
 import { useAuth } from "@/components/auth-context";
 import supabase from "@/lib/supabase";
 import * as Haptics from "expo-haptics";
-import { Image } from "expo-image";
 import { usePostHog } from "posthog-react-native";
 
 interface UserData {
@@ -100,48 +99,45 @@ export default function ModifyProteinGoal() {
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-      <SafeAreaView style={styles.container}>
-        <Image
-          source={require("@/assets/images/background.png")}
-          style={styles.background}
-          contentFit="cover"
-        />
-        <Text style={styles.title}>Modify Protein Goal</Text>
+      <View style={styles.container}>
+        <SafeAreaView style={styles.safeArea}>
+          <Text style={styles.title}>Modify Protein Goal</Text>
 
-        <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
-          style={styles.content}
-        >
-          <View style={styles.inputContainer}>
-            <Text style={styles.label}>Daily Protein Goal (g)</Text>
-            <TextInput
-              style={styles.input}
-              value={proteinGoal}
-              onChangeText={setProteinGoal}
-              placeholder="Enter protein goal"
-              placeholderTextColor="#666666"
-              keyboardType="numeric"
-            />
-            <Text style={styles.currentGoal}>
-              Current goal: {currentGoal}g protein per day
-            </Text>
-            {userData && (
-              <Text style={styles.suggestion}>
-                Suggested goal based on your profile: {suggestedProtein}g
-                protein per day
-              </Text>
-            )}
-          </View>
-
-          <TouchableOpacity
-            style={[styles.saveButton, !isValid && styles.buttonDisabled]}
-            onPress={handleSave}
-            disabled={!isValid}
+          <KeyboardAvoidingView
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
+            style={styles.content}
           >
-            <Text style={styles.saveButtonText}>Save Changes</Text>
-          </TouchableOpacity>
-        </KeyboardAvoidingView>
-      </SafeAreaView>
+            <View style={styles.inputContainer}>
+              <Text style={styles.label}>Daily Protein Goal (g)</Text>
+              <TextInput
+                style={styles.input}
+                value={proteinGoal}
+                onChangeText={setProteinGoal}
+                placeholder="Enter protein goal"
+                placeholderTextColor="rgba(51, 51, 51, 0.7)"
+                keyboardType="numeric"
+              />
+              <Text style={styles.currentGoal}>
+                Current goal: {currentGoal}g protein per day
+              </Text>
+              {userData && (
+                <Text style={styles.suggestion}>
+                  Suggested goal based on your profile: {suggestedProtein}g
+                  protein per day
+                </Text>
+              )}
+            </View>
+
+            <TouchableOpacity
+              style={[styles.saveButton, !isValid && styles.buttonDisabled]}
+              onPress={handleSave}
+              disabled={!isValid}
+            >
+              <Text style={styles.saveButtonText}>Save Changes</Text>
+            </TouchableOpacity>
+          </KeyboardAvoidingView>
+        </SafeAreaView>
+      </View>
     </TouchableWithoutFeedback>
   );
 }
@@ -149,17 +145,16 @@ export default function ModifyProteinGoal() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#FCE9BC",
-    padding: 20,
+    backgroundColor: "#fae5d2",
   },
-  background: {
-    ...StyleSheet.absoluteFillObject,
-    zIndex: -1,
+  safeArea: {
+    flex: 1,
+    padding: 20,
   },
   title: {
     fontSize: 42,
-    fontFamily: "Platypi",
-    color: "#2A2A2A",
+    color: "#333333",
+    fontWeight: "700",
     marginBottom: 40,
   },
   content: {
@@ -170,27 +165,24 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 20,
-    fontFamily: "Platypi",
-    color: "#2A2A2A",
+    color: "#333333",
+    fontWeight: "500",
     marginBottom: 8,
   },
   input: {
-    backgroundColor: "rgba(42, 42, 42, 0.05)",
+    backgroundColor: "rgba(51, 51, 51, 0.05)",
     borderRadius: 16,
     padding: 16,
     fontSize: 20,
-    fontFamily: "Platypi",
-    color: "#2A2A2A",
+    color: "#333333",
   },
   currentGoal: {
     fontSize: 16,
-    fontFamily: "Platypi",
-    color: "#666666",
+    color: "rgba(51, 51, 51, 0.7)",
     fontStyle: "italic",
   },
   suggestion: {
     fontSize: 16,
-    fontFamily: "Platypi",
     color: "#4CAF50",
     fontStyle: "italic",
     marginTop: 8,
@@ -203,9 +195,8 @@ const styles = StyleSheet.create({
     marginTop: "auto",
   },
   saveButtonText: {
-    color: "#FCE9BC",
+    color: "#fae5d2",
     fontSize: 20,
-    fontFamily: "Platypi",
     fontWeight: "600",
   },
   buttonDisabled: {

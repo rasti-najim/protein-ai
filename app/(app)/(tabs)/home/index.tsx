@@ -51,7 +51,7 @@ export interface Meal {
   name: string;
   protein: number;
   scanned?: boolean; // Keep for backward compatibility
-  logging_method?: 'photo_scan' | 'manual_entry';
+  logging_method?: "photo_scan" | "manual_entry";
   created_at: string;
   isLoading?: boolean; // Add loading flag for skeleton display
 }
@@ -79,7 +79,10 @@ export default function Index() {
   const [isScanning, setIsScanning] = useState(false);
   const [showGoalReached, setShowGoalReached] = useState(false);
   const [hasShownGoalReached, setHasShownGoalReached] = useState(false);
-  const [selectedMeal, setSelectedMeal] = useState<MealDetailsData | null>(null);
+  const [showStoreReview, setShowStoreReview] = useState(false);
+  const [selectedMeal, setSelectedMeal] = useState<MealDetailsData | null>(
+    null
+  );
   const [showMealDetails, setShowMealDetails] = useState(false);
   const { photo: scannedPhoto } = usePhoto();
   const { data: streakData } = useStreakQuery();
@@ -109,31 +112,34 @@ export default function Index() {
   const checkForFirstMealReview = async () => {
     try {
       const hasShownReview = await AsyncStorage.getItem("hasShownStoreReview");
-      const nextPromptDate = await AsyncStorage.getItem("storeReviewNextPrompt");
+      const nextPromptDate = await AsyncStorage.getItem(
+        "storeReviewNextPrompt"
+      );
       const mealCount = await AsyncStorage.getItem("totalMealsLogged");
-      
+
       if (__DEV__) {
-        console.log('🔍 Review Check:', {
+        console.log("🔍 Review Check:", {
           hasShownReview,
           nextPromptDate,
           mealCount,
           currentTime: DateTime.now().toISO(),
         });
       }
-      
+
       // TESTING: Force show review prompt (remove this for production)
-      if (__DEV__ && false) { // Set to true to test
+      if (__DEV__ && false) {
+        // Set to true to test
         setTimeout(() => {
           setShowStoreReview(true);
         }, 1000);
         return;
       }
-      
+
       // Don't show if user already rated the app
       if (hasShownReview === "true") {
         return;
       }
-      
+
       // Check if it's time to show again after "Maybe Later"
       if (nextPromptDate) {
         const now = DateTime.now();
@@ -142,13 +148,14 @@ export default function Index() {
           return; // Not time yet
         }
       }
-      
+
       const mealCountNum = parseInt(mealCount || "0");
-      
+
       // Show review prompt only after meaningful usage (3+ meals) OR if it's time for retry
       const shouldShowForUsage = mealCountNum >= 3;
-      const shouldShowForRetry = nextPromptDate && DateTime.now() >= DateTime.fromISO(nextPromptDate);
-      
+      const shouldShowForRetry =
+        nextPromptDate && DateTime.now() >= DateTime.fromISO(nextPromptDate);
+
       if (shouldShowForUsage || shouldShowForRetry) {
         setTimeout(async () => {
           try {
@@ -215,19 +222,22 @@ export default function Index() {
               id: meal.id,
               name: meal.name,
               protein: meal.protein_amount,
-              scanned: meal.logging_method === 'photo_scan', // Keep for backward compatibility
+              scanned: meal.logging_method === "photo_scan", // Keep for backward compatibility
               logging_method: meal.logging_method,
               created_at: meal.created_at || "",
             }))
           );
-          
+
           // Update total meal count and check for review prompt
           try {
             const storedCount = await AsyncStorage.getItem("totalMealsLogged");
             const currentStoredCount = storedCount ? parseInt(storedCount) : 0;
-            
+
             if (data.length > currentStoredCount) {
-              await AsyncStorage.setItem("totalMealsLogged", data.length.toString());
+              await AsyncStorage.setItem(
+                "totalMealsLogged",
+                data.length.toString()
+              );
               // Check if we should show review after meaningful usage (could be from manual entry)
               if (currentStoredCount < 3 && data.length >= 3) {
                 checkForFirstMealReview();
@@ -255,8 +265,10 @@ export default function Index() {
         storedDate === today
       ) {
         // Haptic feedback for goal completion
-        await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        
+        await Haptics.notificationAsync(
+          Haptics.NotificationFeedbackType.Success
+        );
+
         // Progress circle celebration animation
         Animated.sequence([
           Animated.timing(progressPulseAnim, {
@@ -280,13 +292,13 @@ export default function Index() {
             useNativeDriver: true,
           }),
         ]).start();
-        
+
         setShowGoalReached(true);
         await AsyncStorage.setItem("hasShownGoalReached", "true");
         await AsyncStorage.setItem("goalMessageDate", today);
-        
+
         // Streak data will be automatically updated by React Query
-        
+
         // Analytics tracking
         posthog.capture("daily_protein_goal_reached", {
           protein_amount: currentProtein,
@@ -387,7 +399,7 @@ export default function Index() {
         name: "",
         protein: 0,
         scanned: false, // Set to false so skeleton shows
-        logging_method: 'photo_scan',
+        logging_method: "photo_scan",
         id: tempId,
         created_at: DateTime.now().toUTC().toISO(),
         isLoading: true, // Add loading flag
@@ -421,7 +433,10 @@ export default function Index() {
       if (error) {
         console.error("Storage upload error:", error);
         setMeals((prev) => prev.filter((meal) => meal.id !== tempId));
-        Alert.alert("Upload Error", "Failed to upload photo. Please try again.");
+        Alert.alert(
+          "Upload Error",
+          "Failed to upload photo. Please try again."
+        );
         return;
       }
 
@@ -436,7 +451,11 @@ export default function Index() {
             createdAt: DateTime.now().toUTC().toISO(),
           },
           headers: {
-            'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
+            Authorization: `Bearer ${
+              (
+                await supabase.auth.getSession()
+              ).data.session?.access_token
+            }`,
           },
         });
 
@@ -451,14 +470,26 @@ export default function Index() {
       if (scanError) {
         console.error("Scan error:", scanError);
         setMeals((prev) => prev.filter((meal) => meal.id !== tempId));
-        
+
         // Handle specific error types
-        if (scanError.message?.includes("aborted") || scanError.message?.includes("timeout")) {
-          Alert.alert("Timeout Error", "The scan took too long. Please try again with a clearer photo.");
+        if (
+          scanError.message?.includes("aborted") ||
+          scanError.message?.includes("timeout")
+        ) {
+          Alert.alert(
+            "Timeout Error",
+            "The scan took too long. Please try again with a clearer photo."
+          );
         } else if (scanError.message?.includes("interrupted")) {
-          Alert.alert("Connection Error", "The request was interrupted. Please check your connection and try again.");
+          Alert.alert(
+            "Connection Error",
+            "The request was interrupted. Please check your connection and try again."
+          );
         } else {
-          Alert.alert("Scan Error", "Failed to analyze photo. Please try again.");
+          Alert.alert(
+            "Scan Error",
+            "Failed to analyze photo. Please try again."
+          );
         }
         return;
       }
@@ -481,7 +512,7 @@ export default function Index() {
           name: scanData.meal_name,
           protein: scanData.protein_g,
           scanned: true,
-          logging_method: 'photo_scan',
+          logging_method: "photo_scan",
           created_at: DateTime.now().toUTC().toISO(),
         },
         ...prev,
@@ -489,13 +520,13 @@ export default function Index() {
 
       // Update current protein intake
       setCurrentProtein((prev) => prev + scanData.protein_g);
-      
+
       // Track meal count for store review
       try {
         const currentCount = await AsyncStorage.getItem("totalMealsLogged");
         const newCount = currentCount ? parseInt(currentCount) + 1 : 1;
         await AsyncStorage.setItem("totalMealsLogged", newCount.toString());
-        
+
         // Check if we should show store review after meaningful usage (3+ meals)
         if (newCount === 3) {
           checkForFirstMealReview();
@@ -503,7 +534,7 @@ export default function Index() {
       } catch (e) {
         console.error("Failed to update meal count", e);
       }
-      
+
       posthog.capture("meal_scanned", {
         meal_name: scanData.meal_name,
         protein_amount: scanData.protein_g,
@@ -555,25 +586,26 @@ export default function Index() {
   };
 
   const handleMealUpdated = (updatedMeal: MealDetailsData) => {
-    setMeals(prevMeals => 
-      prevMeals.map(meal => 
-        meal.id === updatedMeal.id 
+    setMeals((prevMeals) =>
+      prevMeals.map((meal) =>
+        meal.id === updatedMeal.id
           ? { ...meal, name: updatedMeal.name, protein: updatedMeal.protein }
           : meal
       )
     );
-    
+
     // Update current protein total
-    const proteinDifference = updatedMeal.protein - (selectedMeal?.protein || 0);
-    setCurrentProtein(prev => prev + proteinDifference);
-    
+    const proteinDifference =
+      updatedMeal.protein - (selectedMeal?.protein || 0);
+    setCurrentProtein((prev) => prev + proteinDifference);
+
     // Update selected meal for the modal
     setSelectedMeal(updatedMeal);
   };
 
   const handleDeleteMeal = async (meal: MealDetailsData) => {
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
-    
+
     Alert.alert(
       "Delete Meal",
       `Are you sure you want to delete "${meal.name}"? This action cannot be undone.`,
@@ -595,14 +627,17 @@ export default function Index() {
 
                 if (error) {
                   console.error("Error deleting meal:", error);
-                  Alert.alert("Error", "Failed to delete meal. Please try again.");
+                  Alert.alert(
+                    "Error",
+                    "Failed to delete meal. Please try again."
+                  );
                   return;
                 }
 
                 // Update local state
                 setMeals((prev) => prev.filter((m) => m.id !== meal.id));
                 setCurrentProtein((prev) => prev - meal.protein);
-                
+
                 // Close modal
                 setShowMealDetails(false);
                 setSelectedMeal(null);
@@ -613,7 +648,9 @@ export default function Index() {
                   protein_amount: meal.protein,
                 });
 
-                await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                await Haptics.notificationAsync(
+                  Haptics.NotificationFeedbackType.Success
+                );
               }
             } catch (error) {
               console.error("Error deleting meal:", error);
@@ -713,7 +750,7 @@ export default function Index() {
                 onPress={item.onPress}
               >
                 <Text style={styles.menuItemText}>{item.text}</Text>
-                <FontAwesome6 name={item.icon} size={24} color="#2A2A2A" />
+                <FontAwesome6 name={item.icon} size={24} color="#333333" />
               </Button>
             </Animated.View>
           ))}
@@ -735,7 +772,7 @@ export default function Index() {
           ]}
         >
           <Pressable onPress={toggleMenu} style={styles.fabButton}>
-            <FontAwesome6 name="plus" size={32} color="#FCE9BC" />
+            <FontAwesome6 name="plus" size={32} color="#fae5d2" />
           </Pressable>
         </Animated.View>
       </View>
@@ -744,21 +781,16 @@ export default function Index() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <Image
-        source={require("@/assets/images/background.png")}
-        style={styles.background}
-        contentFit="cover"
-      />
       <ScrollView
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.header}>
           <Text style={styles.title}>Protein AI</Text>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
             {__DEV__ && (
-              <View style={{ flexDirection: 'row', gap: 4 }}>
-                <Pressable 
+              <View style={{ flexDirection: "row", gap: 4 }}>
+                <Pressable
                   onPress={async () => {
                     try {
                       if (await StoreReview.hasAction()) {
@@ -769,35 +801,51 @@ export default function Index() {
                     }
                   }}
                   style={{
-                    backgroundColor: '#FF6B35',
+                    backgroundColor: "#FF6B35",
                     paddingHorizontal: 6,
                     paddingVertical: 4,
                     borderRadius: 6,
                     borderWidth: 1,
-                    borderColor: '#2A2A2A',
+                    borderColor: "#2A2A2A",
                   }}
                 >
-                  <Text style={{ fontSize: 10, color: '#FCE9BC', fontFamily: 'Platypi' }}>Review</Text>
+                  <Text
+                    style={{
+                      fontSize: 10,
+                      color: "#FCE9BC",
+                      fontFamily: "Platypi",
+                    }}
+                  >
+                    Review
+                  </Text>
                 </Pressable>
-                <Pressable 
+                <Pressable
                   onPress={async () => {
                     await AsyncStorage.multiRemove([
-                      'hasShownStoreReview', 
-                      'storeReviewNextPrompt', 
-                      'totalMealsLogged'
+                      "hasShownStoreReview",
+                      "storeReviewNextPrompt",
+                      "totalMealsLogged",
                     ]);
-                    console.log('🧹 Reset review state');
+                    console.log("🧹 Reset review state");
                   }}
                   style={{
-                    backgroundColor: '#7FEA71',
+                    backgroundColor: "#7FEA71",
                     paddingHorizontal: 6,
                     paddingVertical: 4,
                     borderRadius: 6,
                     borderWidth: 1,
-                    borderColor: '#2A2A2A',
+                    borderColor: "#2A2A2A",
                   }}
                 >
-                  <Text style={{ fontSize: 10, color: '#2A2A2A', fontFamily: 'Platypi' }}>Reset</Text>
+                  <Text
+                    style={{
+                      fontSize: 10,
+                      color: "#2A2A2A",
+                      fontFamily: "Platypi",
+                    }}
+                  >
+                    Reset
+                  </Text>
                 </Pressable>
               </View>
             )}
@@ -826,7 +874,7 @@ export default function Index() {
           />
         </View>
 
-        <Animated.View 
+        <Animated.View
           style={[
             styles.progressContainer,
             {
@@ -858,12 +906,17 @@ export default function Index() {
           ) : (
             meals.map((meal, index) => {
               // Show skeleton for loading meals
-              if (meal.isLoading || (isScanning && !meal.scanned && meal.name === "")) {
-                return <MealSkeleton key={meal.id || index} showCalculating={true} />;
+              if (
+                meal.isLoading ||
+                (isScanning && !meal.scanned && meal.name === "")
+              ) {
+                return (
+                  <MealSkeleton key={meal.id || index} showCalculating={true} />
+                );
               }
               return (
-                <TouchableOpacity 
-                  key={meal.id || index} 
+                <TouchableOpacity
+                  key={meal.id || index}
                   style={styles.mealItem}
                   onPress={() => handleMealPress(meal)}
                   activeOpacity={0.7}
@@ -915,7 +968,6 @@ export default function Index() {
         onDelete={handleDeleteMeal}
         onMealUpdated={handleMealUpdated}
       />
-
     </SafeAreaView>
   );
 }
@@ -923,15 +975,12 @@ export default function Index() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    // backgroundColor: "#FCE9BC",
+    backgroundColor: "#fae5d2",
   },
   scrollView: {
     flex: 1,
     padding: 20,
     zIndex: 0,
-  },
-  background: {
-    ...StyleSheet.absoluteFillObject,
   },
   header: {
     flexDirection: "row",
@@ -947,8 +996,8 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 42,
-    fontFamily: "Platypi",
-    color: "#2A2A2A",
+    color: "#333333",
+    fontWeight: "700",
   },
   badge: {
     flexDirection: "row",
@@ -957,18 +1006,17 @@ const styles = StyleSheet.create({
     padding: 8,
     borderRadius: 12,
     borderWidth: 2,
-    borderColor: "#2A2A2A",
+    borderColor: "#333333",
   },
   badgeNumber: {
     fontSize: 16,
     fontWeight: "bold",
-    fontFamily: "Platypi",
-    color: "#2A2A2A",
+    color: "#333333",
   },
   sectionTitle: {
     fontSize: 28,
-    fontFamily: "Platypi",
-    color: "#2A2A2A",
+    color: "#333333",
+    fontWeight: "600",
     marginBottom: 16,
   },
   streakIcon: {
@@ -986,19 +1034,17 @@ const styles = StyleSheet.create({
   },
   progressNumber: {
     fontSize: 48,
-    fontFamily: "Platypi",
-    color: "#2A2A2A",
+    color: "#333333",
     fontWeight: "600",
   },
   progressLabel: {
     fontSize: 20,
-    fontFamily: "Platypi",
-    color: "#2A2A2A",
+    color: "#333333",
+    fontWeight: "500",
   },
   progressGoal: {
     fontSize: 16,
-    fontFamily: "Platypi",
-    color: "#666666",
+    color: "rgba(51, 51, 51, 0.7)",
     marginTop: 4,
   },
   mealsList: {
@@ -1010,7 +1056,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: "rgba(42, 42, 42, 0.1)",
+    borderBottomColor: "rgba(51, 51, 51, 0.1)",
   },
   mealInfo: {
     flex: 1,
@@ -1021,8 +1067,8 @@ const styles = StyleSheet.create({
   },
   mealName: {
     fontSize: 20,
-    fontFamily: "Platypi",
-    color: "#2A2A2A",
+    color: "#333333",
+    fontWeight: "500",
     flex: 1,
     lineHeight: 24,
   },
@@ -1034,8 +1080,7 @@ const styles = StyleSheet.create({
   },
   mealProtein: {
     fontSize: 16,
-    fontFamily: "Platypi",
-    color: "#FCE9BC",
+    color: "#fae5d2",
     fontWeight: "600",
   },
   mealMeta: {
@@ -1045,14 +1090,12 @@ const styles = StyleSheet.create({
   },
   mealTime: {
     fontSize: 16,
-    fontFamily: "Platypi",
-    color: "#666666",
+    color: "rgba(51, 51, 51, 0.7)",
     flexShrink: 0,
   },
   placeholderText: {
     fontSize: 16,
-    fontFamily: "Platypi",
-    color: "#666666",
+    color: "rgba(51, 51, 51, 0.7)",
     fontStyle: "italic",
     textAlign: "center",
     marginTop: 8,
@@ -1103,7 +1146,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "flex-end",
     gap: 16,
-    backgroundColor: "#FCE9BC",
+    backgroundColor: "#fae5d2",
     paddingVertical: 16,
     paddingHorizontal: 24,
     borderRadius: 16,
@@ -1117,12 +1160,12 @@ const styles = StyleSheet.create({
     shadowRadius: 3.84,
     elevation: 5,
     borderWidth: 2,
-    borderColor: "#2A2A2A",
+    borderColor: "#333333",
   },
   menuItemText: {
     fontSize: 20,
-    fontFamily: "Platypi",
-    color: "#2A2A2A",
+    color: "#333333",
+    fontWeight: "500",
   },
   blurOverlay: {
     position: "absolute",

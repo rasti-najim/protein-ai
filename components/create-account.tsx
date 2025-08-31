@@ -167,7 +167,6 @@ export default function CreateAccount({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#FCE9BC",
   },
   title: {
     fontSize: 50,

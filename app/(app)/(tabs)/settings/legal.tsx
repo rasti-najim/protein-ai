@@ -1,6 +1,5 @@
 import { View, Text, StyleSheet, Linking } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Image } from "expo-image";
 import { Button } from "@/components/button";
 
 export default function Legal() {
@@ -15,42 +14,37 @@ export default function Legal() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <Image
-        source={require("@/assets/images/background.png")}
-        style={styles.background}
-        contentFit="cover"
-      />
+    <View style={styles.container}>
+      <SafeAreaView style={styles.safeArea}>
+        <Text style={styles.title}>Legal</Text>
 
-      <Text style={styles.title}>Legal</Text>
+        <View style={styles.buttonContainer}>
+          <Button style={styles.button} onPress={handlePrivacyPolicy}>
+            <Text style={styles.buttonText}>Privacy Policy</Text>
+          </Button>
 
-      <View style={styles.buttonContainer}>
-        <Button style={styles.button} onPress={handlePrivacyPolicy}>
-          <Text style={styles.buttonText}>Privacy Policy</Text>
-        </Button>
-
-        <Button style={styles.button} onPress={handleTerms}>
-          <Text style={styles.buttonText}>Terms of Service</Text>
-        </Button>
-      </View>
-    </SafeAreaView>
+          <Button style={styles.button} onPress={handleTerms}>
+            <Text style={styles.buttonText}>Terms of Service</Text>
+          </Button>
+        </View>
+      </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#FCE9BC",
-    padding: 20,
+    backgroundColor: "#fae5d2",
   },
-  background: {
-    ...StyleSheet.absoluteFillObject,
-    zIndex: -1,
+  safeArea: {
+    flex: 1,
+    padding: 20,
   },
   title: {
     fontSize: 42,
-    fontFamily: "Platypi",
-    color: "#2A2A2A",
+    color: "#333333",
+    fontWeight: "700",
     marginBottom: 40,
   },
   buttonContainer: {
@@ -64,8 +58,7 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     fontSize: 20,
-    fontFamily: "Platypi",
-    color: "#FCE9BC",
+    color: "#fae5d2",
     fontWeight: "600",
   },
 });

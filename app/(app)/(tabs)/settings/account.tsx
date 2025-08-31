@@ -2,7 +2,6 @@ import { View, Text, StyleSheet, TouchableOpacity, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "@/components/auth-context";
 import * as Haptics from "expo-haptics";
-import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import { Button } from "@/components/button";
 import { usePostHog } from "posthog-react-native";
@@ -70,42 +69,37 @@ export default function Account() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <Image
-        source={require("@/assets/images/background.png")}
-        style={styles.background}
-        contentFit="cover"
-      />
+    <View style={styles.container}>
+      <SafeAreaView style={styles.safeArea}>
+        <Text style={styles.title}>Account</Text>
 
-      <Text style={styles.title}>Account</Text>
+        <View style={styles.buttonContainer}>
+          <Button style={styles.logoutButton} onPress={handleLogout}>
+            <Text style={styles.logoutText}>Log Out</Text>
+          </Button>
 
-      <View style={styles.buttonContainer}>
-        <Button style={styles.logoutButton} onPress={handleLogout}>
-          <Text style={styles.logoutText}>Log Out</Text>
-        </Button>
-
-        <Button style={styles.deleteButton} onPress={handleDeleteAccount}>
-          <Text style={styles.deleteText}>Delete Account</Text>
-        </Button>
-      </View>
-    </SafeAreaView>
+          <Button style={styles.deleteButton} onPress={handleDeleteAccount}>
+            <Text style={styles.deleteText}>Delete Account</Text>
+          </Button>
+        </View>
+      </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#FCE9BC",
-    padding: 20,
+    backgroundColor: "#fae5d2",
   },
-  background: {
-    ...StyleSheet.absoluteFillObject,
-    zIndex: -1,
+  safeArea: {
+    flex: 1,
+    padding: 20,
   },
   title: {
     fontSize: 42,
-    fontFamily: "Platypi",
-    color: "#2A2A2A",
+    color: "#333333",
+    fontWeight: "700",
     marginBottom: 40,
   },
   buttonContainer: {
@@ -119,8 +113,7 @@ const styles = StyleSheet.create({
   },
   logoutText: {
     fontSize: 20,
-    fontFamily: "Platypi",
-    color: "#FCE9BC",
+    color: "#fae5d2",
     fontWeight: "600",
   },
   deleteButton: {
@@ -131,7 +124,6 @@ const styles = StyleSheet.create({
   },
   deleteText: {
     fontSize: 20,
-    fontFamily: "Platypi",
     color: "#FFFFFF",
     fontWeight: "600",
   },

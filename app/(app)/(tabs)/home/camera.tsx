@@ -69,7 +69,7 @@ export default function Page() {
               style={styles.closeButton}
               onPress={() => router.back()}
             >
-              <MaterialCommunityIcons name="close" size={32} color="#FCE9BC" />
+              <MaterialCommunityIcons name="close" size={32} color="#fae5d2" />
             </TouchableOpacity>
 
             <Text style={styles.title}>Scan Meal</Text>
@@ -91,7 +91,7 @@ export default function Page() {
               <MaterialCommunityIcons
                 name={flash ? "flash" : "flash-off"}
                 size={24}
-                color="#FCE9BC"
+                color="#fae5d2"
               />
             </TouchableOpacity>
 
@@ -131,8 +131,8 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 42,
-    fontFamily: "Platypi",
-    color: "#FCE9BC",
+    color: "#fae5d2",
+    fontWeight: "700",
     textAlign: "center",
   },
   scanFrame: {
@@ -149,22 +149,22 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: "rgba(252, 233, 188, 0.3)",
+    backgroundColor: "rgba(250, 229, 210, 0.3)",
     justifyContent: "center",
     alignItems: "center",
     borderWidth: 4,
-    borderColor: "#FCE9BC",
+    borderColor: "#fae5d2",
   },
   captureButtonInner: {
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: "#FCE9BC",
+    backgroundColor: "#fae5d2",
   },
   text: {
     fontSize: 20,
-    fontFamily: "Platypi",
-    color: "#FCE9BC",
+    color: "#fae5d2",
+    fontWeight: "500",
     textAlign: "center",
     marginBottom: 20,
   },
@@ -176,9 +176,8 @@ const styles = StyleSheet.create({
     minWidth: 200,
   },
   buttonText: {
-    color: "#FCE9BC",
+    color: "#fae5d2",
     fontSize: 20,
-    fontFamily: "Platypi",
     fontWeight: "600",
   },
   buttonContainer: {

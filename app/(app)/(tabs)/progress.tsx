@@ -16,7 +16,6 @@ import { useEffect, useState, useCallback } from "react";
 import supabase from "@/lib/supabase";
 import { useAuth } from "@/components/auth-context";
 import { DateTime } from "luxon";
-import { Image } from "expo-image";
 import { MealHistory } from "@/components/meal-history";
 
 interface BarData {
@@ -45,9 +44,6 @@ export default function Progress() {
     DateTime.now().startOf("week").toISO()
   );
   const [isFirstWeek, setIsFirstWeek] = useState(false);
-  if (!user) {
-    return <Redirect href="/welcome" />;
-  }
 
   useEffect(() => {
     if (user) {
@@ -152,129 +148,129 @@ export default function Progress() {
         days.map((day) => ({
           value: dailyTotals[day] || 0,
           label: day,
-          frontColor: (dailyTotals[day] || 0) >= goal ? "#7FEA71" : "#4A90E2",
+          frontColor: (dailyTotals[day] || 0) >= goal ? "#7FEA71" : "#333333",
           // labelTextStyle: styles.chartLabel,
         }))
       );
     }
   };
 
+  if (!user) {
+    return <Redirect href="/welcome" />;
+  }
+
   return (
-    <SafeAreaView style={styles.container}>
-      <Image
-        source={require("@/assets/images/background.png")}
-        style={styles.background}
-        contentFit="cover"
-      />
-      <ScrollView style={styles.scrollView}>
-        <Text style={styles.title}>Progress</Text>
+    <View style={styles.container}>
+      <SafeAreaView style={styles.safeArea}>
+        <ScrollView style={styles.scrollView}>
+          <Text style={styles.title}>Progress</Text>
 
-        <Text style={styles.sectionTitle}>This Week</Text>
+          <Text style={styles.sectionTitle}>This Week</Text>
 
-        <View style={styles.weekSelector}>
-          <TouchableOpacity
-            onPress={() => {
-              if (!isFirstWeek) {
-                const prevWeek = DateTime.fromISO(selectedWeekStart)
-                  .minus({ weeks: 1 })
-                  .toISO();
-                setSelectedWeekStart(prevWeek);
-              }
-            }}
-            style={[
-              styles.weekButton,
-              isFirstWeek && styles.weekButtonDisabled,
-            ]}
-            disabled={isFirstWeek}
-          >
-            <Text
+          <View style={styles.weekSelector}>
+            <TouchableOpacity
+              onPress={() => {
+                if (!isFirstWeek) {
+                  const prevWeek = DateTime.fromISO(selectedWeekStart)
+                    .minus({ weeks: 1 })
+                    .toISO();
+                  setSelectedWeekStart(prevWeek);
+                }
+              }}
               style={[
-                styles.weekButtonText,
-                isFirstWeek && styles.weekButtonTextDisabled,
+                styles.weekButton,
+                isFirstWeek && styles.weekButtonDisabled,
               ]}
+              disabled={isFirstWeek}
             >
-              ←
+              <Text
+                style={[
+                  styles.weekButtonText,
+                  isFirstWeek && styles.weekButtonTextDisabled,
+                ]}
+              >
+                ←
+              </Text>
+            </TouchableOpacity>
+
+            <Text style={styles.weekLabel}>
+              {DateTime.fromISO(selectedWeekStart).toFormat("MMM d")} -{" "}
+              {DateTime.fromISO(selectedWeekStart)
+                .plus({ days: 6 })
+                .toFormat("MMM d")}
             </Text>
-          </TouchableOpacity>
 
-          <Text style={styles.weekLabel}>
-            {DateTime.fromISO(selectedWeekStart).toFormat("MMM d")} -{" "}
-            {DateTime.fromISO(selectedWeekStart)
-              .plus({ days: 6 })
-              .toFormat("MMM d")}
-          </Text>
+            <TouchableOpacity
+              onPress={() => {
+                const nextWeek = DateTime.fromISO(selectedWeekStart)
+                  .plus({ weeks: 1 })
+                  .toISO();
+                const now = DateTime.now();
+                if (DateTime.fromISO(nextWeek) <= now) {
+                  setSelectedWeekStart(nextWeek);
+                }
+              }}
+              style={styles.weekButton}
+            >
+              <Text style={styles.weekButtonText}>→</Text>
+            </TouchableOpacity>
+          </View>
 
-          <TouchableOpacity
-            onPress={() => {
-              const nextWeek = DateTime.fromISO(selectedWeekStart)
-                .plus({ weeks: 1 })
-                .toISO();
-              const now = DateTime.now();
-              if (DateTime.fromISO(nextWeek) <= now) {
-                setSelectedWeekStart(nextWeek);
-              }
-            }}
-            style={styles.weekButton}
-          >
-            <Text style={styles.weekButtonText}>→</Text>
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.chartContainer}>
-          {/* <View style={styles.goalLine}>
+          <View style={styles.chartContainer}>
+            {/* <View style={styles.goalLine}>
             <View style={styles.goalDash} />
             <Text style={styles.goalText}>{goal}g</Text>
           </View> */}
 
-          <BarChart
-            data={barData}
-            barWidth={22}
-            spacing={16}
-            barBorderRadius={4}
-            xAxisThickness={0}
-            yAxisThickness={0}
-            noOfSections={4}
-            maxValue={Math.ceil((goal * 2.5) / 10) * 10}
-            width={screenWidth - 40}
-            renderTooltip={(item: any) => (
-              <View style={[styles.proteinBadge, { zIndex: 2 }]}>
-                <Text style={styles.proteinText}>{item.value}g</Text>
-              </View>
-            )}
-          />
-        </View>
+            <BarChart
+              data={barData}
+              barWidth={22}
+              spacing={16}
+              barBorderRadius={4}
+              xAxisThickness={0}
+              yAxisThickness={0}
+              noOfSections={4}
+              maxValue={Math.ceil((goal * 2.5) / 10) * 10}
+              width={screenWidth - 40}
+              renderTooltip={(item: any) => (
+                <View style={[styles.proteinBadge, { zIndex: 2 }]}>
+                  <Text style={styles.proteinText}>{item.value}g</Text>
+                </View>
+              )}
+            />
+          </View>
 
-        <Text style={styles.sectionTitle}>History</Text>
+          <Text style={styles.sectionTitle}>History</Text>
 
-        <MealHistory userId={user.id} />
-      </ScrollView>
-    </SafeAreaView>
+          <MealHistory userId={user.id} />
+        </ScrollView>
+      </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#FCE9BC",
+    backgroundColor: "#fae5d2",
+  },
+  safeArea: {
+    flex: 1,
   },
   scrollView: {
     flex: 1,
     padding: 20,
   },
-  background: {
-    ...StyleSheet.absoluteFillObject,
-    zIndex: -1,
-  },
   title: {
     fontSize: 42,
-    fontFamily: "Platypi",
-    color: "#2A2A2A",
+    color: "#333333",
+    fontWeight: "700",
     marginBottom: 32,
   },
   sectionTitle: {
     fontSize: 32,
-    fontFamily: "Platypi",
-    color: "#2A2A2A",
+    color: "#333333",
+    fontWeight: "600",
     marginBottom: 24,
   },
   chartContainer: {
@@ -293,34 +289,33 @@ const styles = StyleSheet.create({
   goalDash: {
     flex: 1,
     height: 1,
-    backgroundColor: "#2A2A2A",
+    backgroundColor: "#333333",
     opacity: 0.2,
     borderStyle: "dashed",
     borderWidth: 1,
   },
   goalText: {
     fontSize: 16,
-    fontFamily: "Platypi",
-    color: "#666666",
+    color: "rgba(51, 51, 51, 0.7)",
     marginLeft: 8,
   },
   chartLabel: {
     fontSize: 20,
-    fontFamily: "Platypi",
-    color: "#2A2A2A",
+    color: "#333333",
+    fontWeight: "500",
   },
   proteinBadge: {
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: "rgba(42, 42, 42, 0.2)",
-    backgroundColor: "#FCE9BC",
+    borderColor: "rgba(51, 51, 51, 0.2)",
+    backgroundColor: "#333333",
   },
   proteinText: {
     fontSize: 14,
-    fontFamily: "Platypi",
-    color: "#666666",
+    color: "#fae5d2",
+    fontWeight: "600",
   },
   historyList: {
     gap: 32,
@@ -330,26 +325,26 @@ const styles = StyleSheet.create({
   },
   historyDate: {
     fontSize: 32,
-    fontFamily: "Platypi",
-    color: "#2A2A2A",
+    color: "#333333",
+    fontWeight: "600",
   },
   mealItem: {
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: "rgba(42, 42, 42, 0.1)",
+    borderBottomColor: "rgba(51, 51, 51, 0.1)",
   },
   mealText: {
     fontSize: 24,
-    fontFamily: "Platypi",
-    color: "#2A2A2A",
+    color: "#333333",
+    fontWeight: "500",
   },
   weekIndicator: {
     marginBottom: 8,
   },
   weekLabel: {
     fontSize: 16,
-    fontFamily: "Platypi",
-    color: "#666666",
+    color: "#333333",
+    fontWeight: "500",
   },
   weekSelector: {
     flexDirection: "row",
@@ -363,13 +358,13 @@ const styles = StyleSheet.create({
   },
   weekButtonText: {
     fontSize: 24,
-    fontFamily: "Platypi",
-    color: "#2A2A2A",
+    color: "#333333",
+    fontWeight: "600",
   },
   weekButtonDisabled: {
     opacity: 0.3,
   },
   weekButtonTextDisabled: {
-    color: "#666666",
+    color: "rgba(51, 51, 51, 0.3)",
   },
 });
