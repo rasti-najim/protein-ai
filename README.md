@@ -28,31 +28,27 @@
 
 ---
 
-## Screenshots
+## App Store Screenshots
 
 <p align="center">
-  <img src="docs/screenshots/onboarding.png" width="180" alt="Onboarding" />
-  &nbsp;&nbsp;
-  <img src="docs/screenshots/home.png" width="180" alt="Home Screen" />
-  &nbsp;&nbsp;
-  <img src="docs/screenshots/scan.png" width="180" alt="Meal Scan" />
-  &nbsp;&nbsp;
-  <img src="docs/screenshots/progress.png" width="180" alt="Progress" />
+  <img src="docs/screenshots/appstore-hero.png" width="180" alt="Your Future Self Is Calling" />
+  &nbsp;
+  <img src="docs/screenshots/appstore-goals.png" width="180" alt="Personalized Protein Goals" />
+  &nbsp;
+  <img src="docs/screenshots/appstore-scan.png" width="180" alt="Quick Meal Scanning" />
+  &nbsp;
+  <img src="docs/screenshots/appstore-progress.png" width="180" alt="Weekly Progress" />
+  &nbsp;
+  <img src="docs/screenshots/appstore-streaks.png" width="180" alt="Streak Tracking" />
 </p>
 
-<!-- Replace the above with actual screenshot paths -->
-
-## Demo
+## In-App Screenshots
 
 <p align="center">
-  <a href="https://youtube.com/placeholder">
-    <img src="docs/demo-thumbnail.png" width="600" alt="Watch Demo Video" />
-  </a>
-  <br/>
-  <em>Click to watch the full demo video</em>
+  <img src="docs/screenshots/home.png" width="250" alt="Home Screen" />
+  &nbsp;&nbsp;&nbsp;&nbsp;
+  <img src="docs/screenshots/scan.png" width="250" alt="Meal Scan Camera" />
 </p>
-
-<!-- Replace with actual YouTube/Loom link and thumbnail -->
 
 ---
 
@@ -201,6 +197,12 @@ EXPO_PUBLIC_POSTHOG_API_KEY=your_posthog_key
 ## Revenue
 
 Protein AI reached **~$300 MRR** on the App Store through a hard paywall managed by [Superwall](https://superwall.com). The project was eventually shelved after my cofounder left.
+
+<p align="center">
+  <img src="docs/screenshots/revenue.png" width="700" alt="App Store Connect Revenue Analytics" />
+  <br/>
+  <em>App Store Connect analytics — 477 downloads, $210 proceeds, 15.6K impressions</em>
+</p>
 
 ---
 
