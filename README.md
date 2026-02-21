@@ -18,13 +18,27 @@
 </p>
 
 <p align="center">
-  <a href="#demo">Demo</a> &bull;
+  <a href="#revenue">Revenue</a> &bull;
   <a href="#features">Features</a> &bull;
   <a href="#tech-stack">Tech Stack</a> &bull;
   <a href="#architecture">Architecture</a> &bull;
   <a href="#getting-started">Getting Started</a> &bull;
   <a href="https://github.com/rasti-najim/protein-ai-backend">Backend Repo</a>
 </p>
+
+---
+
+## Revenue
+
+Protein AI reached **~$300 MRR** on the App Store through a hard paywall managed by [Superwall](https://superwall.com). The project was eventually shelved after my cofounder left.
+
+<div align="center">
+<img src="docs/screenshots/revenue.png" alt="App Store Connect Analytics" width="700" />
+<br />
+<sub><b>App Store Connect — 15.6K impressions, 477 downloads, $210 proceeds, 3.91% conversion rate</b></sub>
+</div>
+
+<br />
 
 ---
 
@@ -191,18 +205,6 @@ EXPO_PUBLIC_SUPERWALL_API_KEY=your_superwall_key
 EXPO_PUBLIC_GOOGLE_CLIENT_ID=your_google_client_id
 EXPO_PUBLIC_POSTHOG_API_KEY=your_posthog_key
 ```
-
----
-
-## Revenue
-
-Protein AI reached **~$300 MRR** on the App Store through a hard paywall managed by [Superwall](https://superwall.com). The project was eventually shelved after my cofounder left.
-
-<p align="center">
-  <img src="docs/screenshots/revenue.png" width="700" alt="App Store Connect Revenue Analytics" />
-  <br/>
-  <em>App Store Connect analytics — 477 downloads, $210 proceeds, 15.6K impressions</em>
-</p>
 
 ---
 
