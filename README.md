@@ -200,7 +200,7 @@ EXPO_PUBLIC_POSTHOG_API_KEY=your_posthog_key
 
 ## Revenue
 
-Protein AI reached **~$300 MRR** on the App Store through a freemium model managed by [Superwall](https://superwall.com). The paywall gates unlimited AI meal scans while allowing a daily free tier.
+Protein AI reached **~$300 MRR** on the App Store through a hard paywall managed by [Superwall](https://superwall.com). The project was eventually shelved after my cofounder left.
 
 ---
 
@@ -211,5 +211,5 @@ Protein AI reached **~$300 MRR** on the App Store through a freemium model manag
 ---
 
 <p align="center">
-  Built by <a href="https://github.com/rasti-najim">Rasti Najim</a>
+  Built by <a href="https://github.com/rasti-najim">Rasti Aldawoodi</a>
 </p>
